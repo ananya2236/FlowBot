@@ -29,7 +29,7 @@ export default function BotEditorPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setActiveBot(botId);
+    setActiveBot(botId ?? null);
     return () => setActiveBot(null);
   }, [botId, setActiveBot]);
 

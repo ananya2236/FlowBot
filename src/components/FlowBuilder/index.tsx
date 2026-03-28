@@ -3,7 +3,6 @@ import React, { useCallback, useRef, useMemo, useState } from 'react';
 import ReactFlow, {
   Background,
   Controls,
-  MiniMap,
   ReactFlowProvider,
   useReactFlow,
   Panel,
@@ -11,7 +10,7 @@ import ReactFlow, {
   BackgroundVariant,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import GroupNode from './GroupNode';
+import GroupNode, { createBlockFromSidebar } from './GroupNode';
 import StartNode from './StartNode';
 import PreviewModal from '../Preview/PreviewModal';
 import useStore from '@/lib/store';
@@ -35,7 +34,6 @@ const FlowBuilderInner = () => {
     onEdgesChange, 
     onConnect, 
     addNode,
-    updateNodeData 
   } = useStore();
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -48,89 +46,34 @@ const FlowBuilderInner = () => {
       event.preventDefault();
 
       const type = event.dataTransfer.getData('application/reactflow');
-
-      if (typeof type === 'undefined' || !type) {
-        return;
-      }
+      if (!type) return;
 
       const position = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
 
-      // Check if dropped onto existing node for embedding (Inputs only)
-      const nodes = bots.find(b => b.id === activeBotId)?.nodes || [];
-      const targetNode = nodes.find(node => {
-        const nodePos = node.position;
-        // Check if cursor is within the node boundaries (approximate)
-        return (
-          position.x >= nodePos.x &&
-          position.x <= nodePos.x + 320 &&
-          position.y >= nodePos.y &&
-          position.y <= nodePos.y + 200
-        );
-      });
+      const block = createBlockFromSidebar(type);
+      if (!block) return;
 
-      if (targetNode && type.startsWith('input_') && targetNode.type === 'group') {
-        const inputType = type.replace('input_', '');
-        const currentInputs = targetNode.data.inputs || [];
-        updateNodeData(targetNode.id, {
-          inputs: [
-            ...currentInputs,
-            {
-              id: Math.random().toString(36).substr(2, 9),
-              type: inputType,
-              variable: `user_${inputType}_${currentInputs.length + 1}`,
-              placeholder: `Enter ${inputType}...`
-            }
-          ]
-        });
-        return;
-      }
-
-      // Initialize Group with correct data structure
-      let initialData: any = {};
       const groupsCount = bots.find(b => b.id === activeBotId)?.nodes.filter(n => n.type === 'group').length || 0;
-      const groupTitle = `Group #${groupsCount + 1}`;
 
-      if (type === 'bubble') {
-        initialData = { 
-          title: groupTitle,
-          bubbles: [{ id: Math.random().toString(36).substr(2, 9), type: 'text', content: 'Hello!' }],
-          inputs: []
-        };
-      } else if (type.startsWith('input_')) {
-        const inputType = type.replace('input_', '');
-        initialData = { 
-          title: groupTitle,
-          bubbles: [],
-          inputs: [{ 
-            id: Math.random().toString(36).substr(2, 9),
-            type: inputType, 
-            variable: `user_${inputType}_1`, 
-            placeholder: `Enter ${inputType}...` 
-          }]
-        };
-      } else if (['image', 'video', 'audio', 'embed'].includes(type)) {
-        initialData = { 
-          title: groupTitle,
-          bubbles: [{ id: Math.random().toString(36).substr(2, 9), type: type as any, content: '' }],
-          inputs: []
-        };
-      }
-
-      addNode('group', position, initialData);
+      addNode('group', position, {
+        title: `Group #${groupsCount + 1}`,
+        blocks: [block],
+        bubbles: block.kind === 'bubble' ? [{ id: block.id, type: block.type, content: block.content, meta: block.meta }] : [],
+        inputs: block.kind === 'input' ? [{ id: block.id, type: block.type, variable: block.variable, placeholder: block.placeholder }] : [],
+      });
     },
-    [screenToFlowPosition, addNode, updateNodeData, bots, activeBotId]
+    [screenToFlowPosition, addNode, bots, activeBotId]
   );
 
   const activeBot = bots.find(b => b.id === activeBotId);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const defaultEdgeOptions = useMemo(() => ({
-    type: 'smoothstep',
-    style: { stroke: '#94A3B8', strokeWidth: 2 },
-    markerEnd: { type: 'arrowclosed', color: '#94A3B8' }
+    type: 'default',
+    style: { stroke: '#b1b1b7', strokeWidth: 1.5 },
   }), []);
 
   const snapGrid: [number, number] = useMemo(() => [12, 12], []);
@@ -151,6 +94,7 @@ const FlowBuilderInner = () => {
         snapToGrid
         snapGrid={snapGrid}
         defaultEdgeOptions={defaultEdgeOptions}
+        proOptions={{ hideAttribution: true }}
       >
         <Background 
           variant={BackgroundVariant.Dots} 
@@ -159,11 +103,6 @@ const FlowBuilderInner = () => {
           size={1} 
         />
         <Controls className="!bg-white !border-slate-200 !shadow-sm" />
-        <MiniMap 
-          nodeColor="#F8FAFC" 
-          maskColor="rgba(255, 255, 255, 0.6)"
-          className="!bg-white !border-slate-200 !rounded-xl !shadow-sm"
-        />
         <Panel position="top-right" className="flex flex-col items-end gap-3 pointer-events-none">
           {/* Main Action Buttons */}
           <div className="flex items-center gap-2 pointer-events-auto">
