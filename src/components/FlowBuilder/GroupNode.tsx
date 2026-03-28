@@ -207,16 +207,17 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
 
   const onDragEnd = useCallback(() => { setDragIdx(null); setDropIdx(null); }, []);
 
-  const hasInputs = blocks.some(b => b.kind === 'input');
-
   return (
     <div
       className={`typebot-group w-[280px] ${selected ? 'selected' : ''}`}
       onDragOver={onGroupDragOver}
       onDrop={onGroupDrop}
+      role="group"
+      aria-label={`Group: ${title}`}
+      tabIndex={0}
     >
       {/* Left target handle */}
-      <Handle type="target" position={Position.Left} id="main-target" className="!-left-[6px] !top-6" />
+      <Handle type="target" position={Position.Left} id="main-target" className="!-left-[6px]" style={{ top: 24 }} />
 
       {/* Header */}
       <div className="typebot-group-header">
@@ -273,10 +274,8 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
                 {/* Block content */}
                 <BlockContent block={block} onUpdate={u => updateBlock(block.id, u)} />
 
-                {/* Source handle for input blocks */}
-                {block.kind === 'input' && (
-                  <Handle type="source" position={Position.Right} id={`handle-${block.id}`} className="!-right-[6px] !top-1/2 -translate-y-1/2" />
-                )}
+                {/* Source handle for every block */}
+                <Handle type="source" position={Position.Right} id={`handle-${block.id}`} className="!-right-[6px]" style={{ top: '50%', transform: 'translateY(-50%)' }} />
               </div>
             </React.Fragment>
           );
@@ -303,9 +302,9 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
         {showAddMenu && <AddBlockMenu onAdd={addBlock} />}
       </div>
 
-      {/* Source handle when no inputs */}
-      {!hasInputs && (
-        <Handle type="source" position={Position.Right} id="main-source" className="!-right-[6px] !top-1/2 -translate-y-1/2" />
+      {/* Source handle fallback when no blocks */}
+      {blocks.length === 0 && (
+        <Handle type="source" position={Position.Right} id="main-source" className="!-right-[6px]" style={{ top: '50%', transform: 'translateY(-50%)' }} />
       )}
     </div>
   );

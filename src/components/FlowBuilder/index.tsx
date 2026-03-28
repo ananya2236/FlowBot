@@ -73,7 +73,8 @@ const FlowBuilderInner = () => {
 
   const defaultEdgeOptions = useMemo(() => ({
     type: 'default',
-    style: { stroke: '#b1b1b7', strokeWidth: 1.5 },
+    animated: false,
+    style: { stroke: '#d4d4d8', strokeWidth: 2 },
   }), []);
 
   const snapGrid: [number, number] = useMemo(() => [12, 12], []);
@@ -98,9 +99,9 @@ const FlowBuilderInner = () => {
       >
         <Background 
           variant={BackgroundVariant.Dots} 
-          color="#E2E8F0" 
-          gap={24} 
-          size={1} 
+          color="#d4d4d8" 
+          gap={20} 
+          size={1.2} 
         />
         <Controls className="!bg-white !border-slate-200 !shadow-sm" />
         <Panel position="top-right" className="flex flex-col items-end gap-3 pointer-events-none">
