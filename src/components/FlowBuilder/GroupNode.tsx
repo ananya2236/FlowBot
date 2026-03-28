@@ -8,19 +8,18 @@ import {
   Video,
   Mic,
   Plus,
-  X,
-  Upload,
   Globe,
   FileText,
-  MousePointer2,
   Hash,
   Mail,
   Calendar,
   Phone,
   Star,
   File,
-  GripVertical,
   Type as TypeIcon,
+  Play,
+  Copy,
+  Trash2,
 } from 'lucide-react';
 
 /* ── Data model ─────────────────────────────────────────────── */
@@ -140,8 +139,6 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
     setShowAddMenu(false);
   }, [setBlocks]);
 
-  const removeBlock = useCallback((bid: string) => setBlocks(p => p.filter(b => b.id !== bid)), [setBlocks]);
-
   const updateBlock = useCallback((bid: string, u: Partial<Block>) => setBlocks(p => p.map(b => b.id === bid ? { ...b, ...u } : b)), [setBlocks]);
 
   /* ── Internal drag reorder ── */
@@ -216,6 +213,28 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
       aria-label={`Group: ${title}`}
       tabIndex={0}
     >
+      {/* Floating toolbar on select */}
+      {selected && (
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-white border border-gray-200 rounded-lg shadow-sm px-1 py-0.5 z-50 nodrag nopan">
+          <button className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors" title="Test group">
+            <Play size={14} />
+          </button>
+          <button className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors" title="Duplicate group">
+            <Copy size={14} />
+          </button>
+          <button
+            onClick={() => {
+              const { onNodesChange } = useStore.getState();
+              onNodesChange([{ type: 'remove', id }]);
+            }}
+            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+            title="Delete group"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      )}
+
       {/* Left target handle */}
       <Handle type="target" position={Position.Left} id="main-target" className="!-left-[6px]" style={{ top: 24 }} />
 
@@ -245,34 +264,19 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
 
               {/* Block */}
               <div
-                className={`typebot-block group/block border-l-[3px] ${c.border} ${dragIdx === i ? 'opacity-30' : ''}`}
+                className={`typebot-block group/block ${dragIdx === i ? 'opacity-30' : ''}`}
                 draggable
                 onDragStart={e => onBlockDragStart(e, i)}
                 onDragEnd={onDragEnd}
               >
-                {/* Block header row */}
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-1.5">
-                    <div className={`w-5 h-5 rounded ${c.bg} flex items-center justify-center`}>
-                      <c.icon size={11} className={c.color} />
-                    </div>
-                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{c.label}</span>
+                <div className="flex items-start gap-2">
+                  <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 ${c.bg}`}>
+                    <c.icon size={11} className={c.color} />
                   </div>
-                  <div className="flex items-center gap-0.5">
-                    <button
-                      onClick={() => removeBlock(block.id)}
-                      className="nodrag nopan p-0.5 rounded opacity-0 group-hover/block:opacity-100 text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all"
-                    >
-                      <X size={12} />
-                    </button>
-                    <div className="nodrag nopan cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500">
-                      <GripVertical size={14} />
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    <BlockContent block={block} onUpdate={u => updateBlock(block.id, u)} />
                   </div>
                 </div>
-
-                {/* Block content */}
-                <BlockContent block={block} onUpdate={u => updateBlock(block.id, u)} />
 
                 {/* Source handle for every block */}
                 <Handle type="source" position={Position.Right} id={`handle-${block.id}`} className="!-right-[6px]" style={{ top: '50%', transform: 'translateY(-50%)' }} />
@@ -321,36 +325,27 @@ const BlockContent = ({ block, onUpdate }: { block: Block; onUpdate: (u: Partial
             value={block.content}
             onChange={e => onUpdate({ content: e.target.value })}
             placeholder="Click to edit..."
-            className="nodrag nopan w-full bg-transparent border-none p-0 text-[13px] text-gray-700 placeholder:text-gray-300 resize-none min-h-[20px] outline-none leading-relaxed"
+            className="nodrag nopan w-full bg-transparent border-none p-0 text-[12px] text-gray-600 placeholder:text-gray-400 resize-none min-h-[16px] outline-none leading-snug"
             onInput={e => { const t = e.target as HTMLTextAreaElement; t.style.height = 'auto'; t.style.height = `${t.scrollHeight}px`; }}
             rows={1}
           />
         );
       case 'image': case 'video': case 'audio':
         return (
-          <div className="nodrag nopan">
-            {block.content ? (
-              <input
-                value={block.content}
-                onChange={e => onUpdate({ content: e.target.value })}
-                placeholder={`${block.type} URL...`}
-                className="w-full bg-white border border-gray-100 rounded px-2 py-1 text-[11px] text-gray-500 outline-none focus:border-gray-300"
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center py-3 border border-dashed border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
-                <Upload size={16} className="text-gray-300 mb-1" />
-                <span className="text-[10px] text-gray-400">Upload {block.type} or paste URL</span>
-              </div>
-            )}
-          </div>
+          <input
+            value={block.content}
+            onChange={e => onUpdate({ content: e.target.value })}
+            placeholder={`${block.type} URL...`}
+            className="nodrag nopan w-full bg-transparent border-none p-0 text-[12px] text-gray-500 placeholder:text-gray-400 outline-none"
+          />
         );
       case 'embed':
         return (
           <input
             value={block.content}
             onChange={e => onUpdate({ content: e.target.value })}
-            placeholder="Paste URL (website, PDF, iFrame)..."
-            className="nodrag nopan w-full bg-white border border-gray-100 rounded-md px-2.5 py-1.5 text-[11px] text-gray-600 outline-none focus:border-gray-300"
+            placeholder="Paste URL..."
+            className="nodrag nopan w-full bg-transparent border-none p-0 text-[12px] text-gray-500 placeholder:text-gray-400 outline-none"
           />
         );
     }
@@ -358,23 +353,9 @@ const BlockContent = ({ block, onUpdate }: { block: Block; onUpdate: (u: Partial
 
   if (block.kind === 'input') {
     return (
-      <div className="nodrag nopan space-y-1.5">
-        <div className="flex items-center gap-1.5 px-2 py-1 bg-orange-50/60 border border-orange-100/50 rounded-md">
-          <span className="text-orange-400 font-mono text-[9px] font-bold">#</span>
-          <input
-            value={block.variable || ''}
-            onChange={e => onUpdate({ variable: e.target.value })}
-            className="bg-transparent font-mono text-[10px] text-orange-600 border-none outline-none p-0 w-full"
-            placeholder="variable_name"
-          />
-        </div>
-        <input
-          value={block.placeholder || ''}
-          onChange={e => onUpdate({ placeholder: e.target.value })}
-          className="w-full bg-white border border-gray-100 rounded-md px-2.5 py-1 text-[10px] text-gray-500 placeholder:text-gray-300 outline-none focus:border-gray-300"
-          placeholder="Placeholder text..."
-        />
-      </div>
+      <span className="text-[12px] text-gray-400 nodrag nopan">
+        {block.placeholder || `Type your ${block.type}...`}
+      </span>
     );
   }
 

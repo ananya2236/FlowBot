@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Play, Send, Layout, Palette, Settings, Share2, Bot } from 'lucide-react';
+import { ChevronLeft, Undo2, Redo2, HelpCircle, Share2, Play, FileText } from 'lucide-react';
 import useStore from '@/lib/store';
 import PreviewModal from '../Preview/PreviewModal';
 
@@ -19,64 +19,74 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab }: EditorN
 
   if (!bot) return null;
 
+  const tabs = ['Flow', 'Theme', 'Settings', 'Share'];
+
   return (
     <>
-      <nav className="h-[56px] border-b border-slate-100 bg-white/80 backdrop-blur-xl sticky top-0 z-50 flex items-center justify-between px-6">
-        <div className="flex items-center gap-6">
-          <button 
+      <nav className="h-[48px] border-b border-gray-200 bg-white sticky top-0 z-50 flex items-center justify-between px-4">
+        {/* Left section */}
+        <div className="flex items-center gap-2">
+          <button
             onClick={() => router.push('/')}
-            className="p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-400 hover:text-slate-900 group"
+            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-800"
           >
-            <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+            <ChevronLeft size={18} />
           </button>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-              <Bot size={18} className="text-orange-600" />
-            </div>
-            <input 
-              type="text" 
+          <div className="flex items-center gap-2 pl-1">
+            <FileText size={16} className="text-gray-400" />
+            <input
+              type="text"
               value={bot.name || ''}
               onChange={(e) => renameBot(botId, e.target.value)}
-              className="bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-800 w-48 placeholder:text-slate-300"
-              placeholder="Untitled Chatbot"
+              className="bg-transparent border-none focus:ring-0 focus:outline-none text-[13px] font-medium text-gray-700 w-36 placeholder:text-gray-300"
+              placeholder="My typebot"
             />
           </div>
+          <div className="flex items-center gap-0.5 ml-2">
+            <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors">
+              <Undo2 size={15} />
+            </button>
+            <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors">
+              <Redo2 size={15} />
+            </button>
+          </div>
+          <button className="ml-2 flex items-center gap-1.5 px-3 py-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors text-[12px] font-medium">
+            <HelpCircle size={14} />
+            Help
+          </button>
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100">
-          {[
-            { id: 'Flow', icon: Layout },
-            { id: 'Theme', icon: Palette },
-            { id: 'Settings', icon: Settings },
-            { id: 'Share', icon: Share2 },
-          ].map((tab) => (
+        {/* Center tabs */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
+          {tabs.map((tab) => (
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
-                activeTab === tab.id 
-                  ? "bg-white text-slate-900 shadow-sm border border-slate-100" 
-                  : "text-slate-400 hover:text-slate-600"
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
+                activeTab === tab
+                  ? 'text-gray-900'
+                  : 'text-gray-400 hover:text-gray-600'
               }`}
             >
-              <div className="flex items-center gap-2">
-                <tab.icon size={12} />
-                {tab.id}
-              </div>
+              {tab}
             </button>
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
-          <button 
+        {/* Right section */}
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <Share2 size={14} />
+            Share
+          </button>
+          <button
             onClick={() => setIsPreviewOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-widest bg-black text-white hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium text-gray-600 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
           >
-            <Play size={12} className="text-white fill-white" />
+            <Play size={12} />
             Test
           </button>
-          <button className="flex items-center gap-2 px-5 py-2 rounded-xl text-[11px] font-bold uppercase tracking-widest bg-black text-white hover:bg-slate-800 transition-all shadow-lg active:scale-95">
-            <Send size={12} />
+          <button className="px-4 py-1.5 rounded-lg text-[12px] font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors">
             Publish
           </button>
         </div>

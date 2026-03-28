@@ -11,47 +11,97 @@ import {
   Hash,
   Calendar,
   Search,
-  MousePointer2,
-  HelpCircle,
-  LayoutGrid,
   Globe,
   File,
   Star,
   FileText,
   Clock,
-  ChevronRight,
-  Layout
+  Lock,
+  Code,
+  ArrowRight,
+  GitBranch,
+  CornerDownRight,
+  CornerUpLeft,
+  Shuffle,
+  Timer,
+  Flag,
+  Command,
+  Reply,
+  XCircle,
+  Sheet,
+  BarChart3,
+  Zap,
+  Send,
+  CreditCard,
+  LayoutGrid,
+  Upload,
+  ListChecks,
+  ImageIcon as PicIcon,
+  SquareStack,
 } from 'lucide-react';
 
 const SECTIONS = [
   {
     title: 'Bubbles',
     items: [
-      { id: 'bubble', label: 'Text', icon: MessageSquare, color: 'text-orange-500', bg: 'bg-orange-50' },
-      { id: 'image', label: 'Image', icon: ImageIcon, color: 'text-purple-500', bg: 'bg-purple-50' },
-      { id: 'video', label: 'Video', icon: Video, color: 'text-blue-500', bg: 'bg-blue-50' },
-      { id: 'audio', label: 'Audio', icon: Mic, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-      { id: 'embed', label: 'Embed', icon: FileText, color: 'text-slate-500', bg: 'bg-slate-50' },
-    ]
+      { id: 'bubble', label: 'Text', icon: MessageSquare, color: 'text-blue-500' },
+      { id: 'image', label: 'Image', icon: ImageIcon, color: 'text-purple-500' },
+      { id: 'video', label: 'Video', icon: Video, color: 'text-blue-400' },
+      { id: 'embed', label: 'Embed', icon: FileText, color: 'text-orange-400' },
+      { id: 'audio', label: 'Audio', icon: Mic, color: 'text-blue-400' },
+    ],
   },
   {
     title: 'Inputs',
     items: [
-      { id: 'input_text', label: 'Text', icon: Type, color: 'text-blue-500', bg: 'bg-blue-50' },
-      { id: 'input_number', label: 'Number', icon: Hash, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-      { id: 'input_email', label: 'Email', icon: Mail, color: 'text-orange-500', bg: 'bg-orange-50' },
-      { id: 'input_website', label: 'Website', icon: Globe, color: 'text-sky-500', bg: 'bg-sky-50' },
-      { id: 'input_date', label: 'Date', icon: Calendar, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-      { id: 'input_phone', label: 'Phone', icon: Phone, color: 'text-cyan-500', bg: 'bg-cyan-50' },
-      { id: 'input_rating', label: 'Rating', icon: Star, color: 'text-yellow-500', bg: 'bg-yellow-50' },
-    ]
+      { id: 'input_text', label: 'Text', icon: Type, color: 'text-orange-500' },
+      { id: 'input_number', label: 'Number', icon: Hash, color: 'text-orange-500' },
+      { id: 'input_email', label: 'Email', icon: Mail, color: 'text-orange-500' },
+      { id: 'input_website', label: 'Website', icon: Globe, color: 'text-orange-500' },
+      { id: 'input_date', label: 'Date', icon: Calendar, color: 'text-orange-500' },
+      { id: 'input_time', label: 'Time', icon: Clock, color: 'text-orange-500' },
+      { id: 'input_phone', label: 'Phone', icon: Phone, color: 'text-orange-500' },
+      { id: 'input_buttons', label: 'Buttons', icon: ListChecks, color: 'text-orange-500' },
+      { id: 'input_pic_choice', label: 'Pic choice', icon: LayoutGrid, color: 'text-orange-500' },
+      { id: 'input_payment', label: 'Payment', icon: CreditCard, color: 'text-orange-500' },
+      { id: 'input_rating', label: 'Rating', icon: Star, color: 'text-orange-500' },
+      { id: 'input_file', label: 'File', icon: Upload, color: 'text-orange-500', badge: true },
+      { id: 'input_cards', label: 'Cards', icon: SquareStack, color: 'text-orange-500' },
+    ],
   },
   {
     title: 'Logic',
     items: [
-      { id: 'logic_condition', label: 'Condition', icon: Layout, color: 'text-red-500', bg: 'bg-red-50' },
-    ]
-  }
+      { id: 'logic_set_variable', label: 'Set variable', icon: Code, color: 'text-purple-500' },
+      { id: 'logic_condition', label: 'Condition', icon: GitBranch, color: 'text-purple-500' },
+      { id: 'logic_redirect', label: 'Redirect', icon: ArrowRight, color: 'text-purple-500' },
+      { id: 'logic_script', label: 'Script', icon: FileText, color: 'text-purple-500' },
+      { id: 'logic_typebot', label: 'Typebot', icon: MessageSquare, color: 'text-purple-500' },
+      { id: 'logic_wait', label: 'Wait', icon: Timer, color: 'text-purple-500' },
+      { id: 'logic_ab_test', label: 'AB Test', icon: Shuffle, color: 'text-purple-500' },
+      { id: 'logic_webhook', label: 'Webhook', icon: Zap, color: 'text-purple-500' },
+      { id: 'logic_jump', label: 'Jump', icon: CornerDownRight, color: 'text-purple-500' },
+      { id: 'logic_return', label: 'Return', icon: CornerUpLeft, color: 'text-purple-500' },
+    ],
+  },
+  {
+    title: 'Events',
+    items: [
+      { id: 'event_start', label: 'Start', icon: Flag, color: 'text-gray-500' },
+      { id: 'event_command', label: 'Command', icon: Command, color: 'text-gray-500' },
+      { id: 'event_reply', label: 'Reply', icon: Reply, color: 'text-gray-500' },
+      { id: 'event_invalid', label: 'Invalid', icon: XCircle, color: 'text-gray-500' },
+    ],
+  },
+  {
+    title: 'Integrations',
+    items: [
+      { id: 'integration_sheets', label: 'Sheets', icon: Sheet, color: 'text-green-500' },
+      { id: 'integration_analytics', label: 'Analytics', icon: BarChart3, color: 'text-yellow-500' },
+      { id: 'integration_webhook', label: 'HTTP request', icon: Zap, color: 'text-blue-500' },
+      { id: 'integration_email', label: 'Email', icon: Send, color: 'text-blue-500' },
+    ],
+  },
 ];
 
 export default function EditorSidebar() {
@@ -63,61 +113,55 @@ export default function EditorSidebar() {
   };
 
   return (
-    <aside className="w-[280px] bg-[#FAFAFA] border-r border-slate-200 flex flex-col">
-      <div className="p-5 border-b border-slate-100 bg-white">
-        <div className="relative group">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Search components..." 
+    <aside className="w-[300px] bg-white border-r border-gray-200 flex flex-col h-full select-none">
+      {/* Search + Lock */}
+      <div className="px-4 pt-4 pb-2 flex items-center gap-2">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-50/50 border border-slate-200/60 rounded-xl pl-10 pr-4 py-2.5 text-xs text-black placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500/30 transition-all font-medium"
+            className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-gray-300"
           />
         </div>
+        <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors border border-gray-200">
+          <Lock size={15} />
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-8 scrollbar-hide">
+      {/* Sections */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
         {SECTIONS.map((section) => {
-          const filteredItems = section.items.filter(item => 
+          const filtered = section.items.filter((item) =>
             item.label.toLowerCase().includes(search.toLowerCase())
           );
-
-          if (filteredItems.length === 0) return null;
+          if (filtered.length === 0) return null;
 
           return (
-            <div key={section.title} className="space-y-3">
-              <h3 className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 px-1">{section.title}</h3>
-              <div className="grid grid-cols-2 gap-2.5">
-                {filteredItems.map((item) => (
+            <div key={section.title} className="mt-4 first:mt-2">
+              <h3 className="text-[13px] font-bold text-gray-800 mb-2">{section.title}</h3>
+              <div className="grid grid-cols-2 gap-1.5">
+                {filtered.map((item: any) => (
                   <div
                     key={item.id}
                     draggable
                     onDragStart={(e) => onDragStart(e, item.id)}
-                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl cursor-grab active:cursor-grabbing bg-white border border-slate-200/60 hover:border-orange-500/40 hover:bg-white hover:shadow-lg hover:shadow-orange-500/5 group transition-all duration-200"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-grab active:cursor-grabbing bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all text-left relative"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-orange-50 transition-all duration-200">
-                      <item.icon size={14} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-500 group-hover:text-black transition-colors text-center tracking-tight">{item.label}</span>
+                    <item.icon size={15} className={`${item.color} shrink-0`} />
+                    <span className="text-[12px] font-medium text-gray-700 truncate">{item.label}</span>
+                    {item.badge && (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-orange-100 rounded-full flex items-center justify-center">
+                        <Lock size={8} className="text-orange-500" />
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
           );
         })}
-      </div>
-
-      <div className="p-4 border-t border-slate-50">
-        <button className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all group">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
-              <HelpCircle size={16} className="text-slate-400 group-hover:text-orange-500" />
-            </div>
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Guide</span>
-          </div>
-          <ChevronRight size={14} className="text-slate-300" />
-        </button>
       </div>
     </aside>
   );
