@@ -202,32 +202,66 @@
   stroke-dasharray: 5 5 !important;
 }
 
+/* Canvas Toolbar (typebot-style) */
+.canvas-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 3px 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.selection-badge {
+  font-size: 12px;
+  font-weight: 500;
+  color: #FF6A00;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.toolbar-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.toolbar-btn-danger:hover {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background: #e5e7eb;
+  margin: 0 2px;
+}
+
+/* Hide default ReactFlow controls */
 .react-flow__controls {
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 6px !important;
-  overflow: hidden;
-  background: white !important;
-  display: flex !important;
-  flex-direction: row !important;
-}
-
-.react-flow__controls-button {
-  background: #FFFFFF !important;
-  border-bottom: none !important;
-  border-right: 1px solid #f3f4f6 !important;
-  color: #9ca3af !important;
-  width: 28px !important;
-  height: 28px !important;
-}
-
-.react-flow__controls-button:last-child {
-  border-right: none !important;
-}
-
-.react-flow__controls-button:hover {
-  background: #f9fafb !important;
-  color: #374151 !important;
+  display: none !important;
 }
 
 /* Scrollbar customization */

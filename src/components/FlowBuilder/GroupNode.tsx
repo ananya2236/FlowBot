@@ -107,7 +107,9 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dropIdx, setDropIdx] = useState<number | null>(null);
   const [showAddMenu, setShowAddMenu] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   // Sync to store (debounced)
   const blocksRef = useRef(blocks);
@@ -240,12 +242,25 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
 
       {/* Header */}
       <div className="typebot-group-header">
-        <input
-          value={title}
-          onChange={e => { setTitle(e.target.value); }}
-          className="nodrag nopan bg-transparent border-none p-0 text-[13px] font-semibold text-gray-800 w-full outline-none focus:text-black"
-          placeholder="Group title"
-        />
+        {editingTitle ? (
+          <input
+            ref={titleInputRef}
+            autoFocus
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            onBlur={() => setEditingTitle(false)}
+            onKeyDown={e => { if (e.key === 'Enter') setEditingTitle(false); }}
+            className="nodrag nopan bg-transparent border-none p-0 text-[13px] font-semibold text-gray-800 w-full outline-none focus:text-black"
+            placeholder="Group title"
+          />
+        ) : (
+          <span
+            onDoubleClick={() => setEditingTitle(true)}
+            className="text-[13px] font-semibold text-gray-800 cursor-default select-none block w-full truncate"
+          >
+            {title || 'Group title'}
+          </span>
+        )}
       </div>
 
       {/* Blocks */}

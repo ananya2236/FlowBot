@@ -23,7 +23,7 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab }: EditorN
 
   return (
     <>
-      <nav className="h-[48px] border-b border-gray-200 bg-white sticky top-0 z-50 flex items-center justify-between px-4">
+      <nav className="h-[48px] bg-white sticky top-0 z-50 flex items-center justify-between px-4 border-b-2 border-orange-500">
         {/* Left section */}
         <div className="flex items-center gap-2">
           <button

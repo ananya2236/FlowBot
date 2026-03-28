@@ -2,7 +2,7 @@
 import React, { useCallback, useRef, useMemo, useState } from 'react';
 import ReactFlow, {
   Background,
-  Controls,
+  Panel,
   ReactFlowProvider,
   useReactFlow,
   ConnectionMode,
@@ -11,6 +11,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import GroupNode, { createBlockFromSidebar } from './GroupNode';
 import StartNode from './StartNode';
+import CanvasToolbar from './CanvasToolbar';
 import PreviewModal from '../Preview/PreviewModal';
 import useStore from '@/lib/store';
 
@@ -98,7 +99,9 @@ const FlowBuilderInner = () => {
           gap={20}
           size={1}
         />
-        <Controls position="top-right" />
+        <Panel position="top-right">
+          <CanvasToolbar />
+        </Panel>
       </ReactFlow>
     </div>
   );
