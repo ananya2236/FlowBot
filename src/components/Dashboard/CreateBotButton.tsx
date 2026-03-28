@@ -16,14 +16,14 @@ export default function CreateBotButton() {
   return (
     <button
       onClick={handleCreate}
-      className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-accent to-accent/80 border border-accent/20 rounded-2xl hover:from-accent/90 hover:to-accent transition-all cursor-pointer shadow-xl shadow-accent/20 group active:scale-[0.98]"
+      className="flex flex-col items-center justify-center p-5 bg-white border-2 border-dashed border-slate-200 rounded-2xl hover:border-orange-500 hover:bg-orange-50 transition-all cursor-pointer group active:scale-[0.98] h-[200px]"
     >
-      <div className="p-4 bg-white/10 rounded-2xl mb-4 group-hover:scale-110 transition-transform shadow-inner border border-white/10">
-        <Plus size={32} className="text-white" strokeWidth={3} />
+      <div className="p-3 bg-slate-50 rounded-xl mb-4 group-hover:bg-white group-hover:scale-110 transition-all border border-slate-100 group-hover:border-orange-200 shadow-sm">
+        <Plus size={24} className="text-slate-400 group-hover:text-orange-500" strokeWidth={3} />
       </div>
-      <h3 className="text-lg font-black text-white mb-1 tracking-tight">Create a Spinabot</h3>
-      <p className="text-xs font-bold text-white/60 text-center px-4 leading-relaxed uppercase tracking-widest">
-        Start building from scratch
+      <h3 className="text-[15px] font-bold text-black mb-1 group-hover:text-orange-500 transition-colors">Create New Bot</h3>
+      <p className="text-[11px] font-bold text-slate-400 text-center px-4 leading-relaxed uppercase tracking-widest">
+        Start from scratch
       </p>
     </button>
   );

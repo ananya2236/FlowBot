@@ -27,6 +27,7 @@ interface BotStore {
   onEdgesChange: (changes: any) => void;
   onConnect: (connection: Connection) => void;
   addNode: (type: string, position: { x: number; y: number }, data?: any) => void;
+  updateNodeData: (nodeId: string, data: any) => void;
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
 }
@@ -34,9 +35,9 @@ interface BotStore {
 const initialNodes: Node[] = [
   {
     id: 'start',
-    type: 'message',
-    position: { x: 250, y: 100 },
-    data: { label: 'Welcome to your Spinabot!' },
+    type: 'start',
+    position: { x: 100, y: 100 },
+    data: {},
   },
 ];
 
@@ -132,13 +133,36 @@ const useStore = create<BotStore>()(
           id: nanoid(),
           type,
           position,
-          data: { label: `${type} block`, ...data },
+          data: { ...data },
         };
         set((state) => ({
           bots: state.bots.map((b) =>
             b.id === activeBotId
               ? { ...b, nodes: [...b.nodes, newNode], updatedAt: Date.now() }
               : b
+          ),
+        }));
+      },
+
+      updateNodeData: (nodeId, data) => {
+        const { activeBotId, bots } = get();
+        if (!activeBotId) return;
+        const activeBot = bots.find((b) => b.id === activeBotId);
+        if (!activeBot) return;
+
+        const updatedNodes = activeBot.nodes.map((node) => {
+          if (node.id === nodeId) {
+            return {
+              ...node,
+              data: { ...node.data, ...data },
+            };
+          }
+          return node;
+        });
+
+        set((state) => ({
+          bots: state.bots.map((b) =>
+            b.id === activeBotId ? { ...b, nodes: updatedNodes, updatedAt: Date.now() } : b
           ),
         }));
       },

@@ -1,65 +1,55 @@
 "use client";
 import React from 'react';
-import { 
-  Type, 
-  Image as ImageIcon, 
-  Video, 
+import {
+  Type,
+  Image as ImageIcon,
+  Video,
   Mic,
-  MessageSquare, 
-  Mail, 
-  Phone, 
-  Hash, 
-  Calendar, 
-  Search, 
+  MessageSquare,
+  Mail,
+  Phone,
+  Hash,
+  Calendar,
+  Search,
   MousePointer2,
   HelpCircle,
   LayoutGrid,
-  Zap,
-  GitBranch,
   Globe,
-  Database,
-  Webhook
+  File,
+  Star,
+  FileText,
+  Clock,
+  ChevronRight,
+  Layout
 } from 'lucide-react';
 
 const SECTIONS = [
   {
     title: 'Bubbles',
     items: [
-      { id: 'text', label: 'Text', icon: MessageSquare, color: 'text-blue-400', bg: 'bg-blue-400/10' },
-      { id: 'image', label: 'Image', icon: ImageIcon, color: 'text-purple-400', bg: 'bg-purple-400/10' },
-      { id: 'video', label: 'Video', icon: Video, color: 'text-pink-400', bg: 'bg-pink-400/10' },
-      { id: 'audio', label: 'Audio', icon: Mic, color: 'text-orange-400', bg: 'bg-orange-400/10' },
+      { id: 'bubble', label: 'Text', icon: MessageSquare, color: 'text-orange-500', bg: 'bg-orange-50' },
+      { id: 'image', label: 'Image', icon: ImageIcon, color: 'text-purple-500', bg: 'bg-purple-50' },
+      { id: 'video', label: 'Video', icon: Video, color: 'text-blue-500', bg: 'bg-blue-50' },
+      { id: 'audio', label: 'Audio', icon: Mic, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+      { id: 'embed', label: 'Embed', icon: FileText, color: 'text-slate-500', bg: 'bg-slate-50' },
     ]
   },
   {
     title: 'Inputs',
     items: [
-      { id: 'text_input', label: 'Text', icon: Type, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
-      { id: 'email', label: 'Email', icon: Mail, color: 'text-orange-400', bg: 'bg-orange-400/10' },
-      { id: 'phone', label: 'Phone', icon: Phone, color: 'text-sky-400', bg: 'bg-sky-400/10' },
-      { id: 'number', label: 'Number', icon: Hash, color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
-      { id: 'date', label: 'Date', icon: Calendar, color: 'text-amber-400', bg: 'bg-amber-400/10' },
-      { id: 'buttons', label: 'Buttons', icon: MousePointer2, color: 'text-rose-400', bg: 'bg-rose-400/10' },
+      { id: 'input_text', label: 'Text', icon: Type, color: 'text-blue-500', bg: 'bg-blue-50' },
+      { id: 'input_number', label: 'Number', icon: Hash, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+      { id: 'input_email', label: 'Email', icon: Mail, color: 'text-orange-500', bg: 'bg-orange-50' },
+      { id: 'input_website', label: 'Website', icon: Globe, color: 'text-sky-500', bg: 'bg-sky-50' },
+      { id: 'input_date', label: 'Date', icon: Calendar, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+      { id: 'input_phone', label: 'Phone', icon: Phone, color: 'text-cyan-500', bg: 'bg-cyan-50' },
+      { id: 'input_rating', label: 'Rating', icon: Star, color: 'text-yellow-500', bg: 'bg-yellow-50' },
     ]
   },
   {
     title: 'Logic',
     items: [
-      { id: 'condition', label: 'Condition', icon: GitBranch, color: 'text-cyan-400', bg: 'bg-cyan-400/10' },
-      { id: 'redirect', label: 'Redirect', icon: Globe, color: 'text-blue-400', bg: 'bg-blue-400/10' },
-      { id: 'webhook', label: 'Webhook', icon: Webhook, color: 'text-red-400', bg: 'bg-red-400/10' },
-    ]
-  },
-  {
-    title: 'Events',
-    items: [
-      { id: 'trigger', label: 'Trigger', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
-    ]
-  },
-  {
-    title: 'Integrations',
-    items: [
-      { id: 'google_sheets', label: 'Sheets', icon: Database, color: 'text-green-400', bg: 'bg-green-400/10' },
+      { id: 'logic_condition', label: 'Condition', icon: Layout, color: 'text-red-500', bg: 'bg-red-50' },
     ]
   }
 ];
@@ -73,54 +63,60 @@ export default function EditorSidebar() {
   };
 
   return (
-    <aside className="w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col h-[calc(100vh-3.5rem)] sticky left-0 z-40">
-      <div className="p-4">
+    <aside className="w-[280px] bg-[#FAFAFA] border-r border-slate-200 flex flex-col">
+      <div className="p-5 border-b border-slate-100 bg-white">
         <div className="relative group">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-accent transition-colors" />
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" />
           <input 
             type="text" 
-            placeholder="Search blocks..." 
+            placeholder="Search components..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-9 pr-4 py-2 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-accent/10 focus:border-accent/40 transition-all placeholder:text-zinc-700"
+            className="w-full bg-slate-50/50 border border-slate-200/60 rounded-xl pl-10 pr-4 py-2.5 text-xs text-black placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500/30 transition-all font-medium"
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-6 scrollbar-hide space-y-8">
-        {SECTIONS.map((section) => (
-          <div key={section.title}>
-            <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-4 ml-1">{section.title}</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {section.items
-                .filter(item => item.label.toLowerCase().includes(search.toLowerCase()))
-                .map((item) => (
+      <div className="flex-1 overflow-y-auto p-4 space-y-8 scrollbar-hide">
+        {SECTIONS.map((section) => {
+          const filteredItems = section.items.filter(item => 
+            item.label.toLowerCase().includes(search.toLowerCase())
+          );
+
+          if (filteredItems.length === 0) return null;
+
+          return (
+            <div key={section.title} className="space-y-3">
+              <h3 className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 px-1">{section.title}</h3>
+              <div className="grid grid-cols-2 gap-2.5">
+                {filteredItems.map((item) => (
                   <div
                     key={item.id}
                     draggable
                     onDragStart={(e) => onDragStart(e, item.id)}
-                    className="flex flex-col items-center gap-2 p-3 bg-zinc-900 border border-zinc-800 rounded-2xl hover:bg-zinc-800 hover:border-accent/30 hover:scale-[1.02] transition-all cursor-grab active:cursor-grabbing group shadow-lg active:scale-[0.98]"
+                    className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl cursor-grab active:cursor-grabbing bg-white border border-slate-200/60 hover:border-orange-500/40 hover:bg-white hover:shadow-lg hover:shadow-orange-500/5 group transition-all duration-200"
                   >
-                    <div className={`p-2 rounded-xl ${item.bg} group-hover:scale-110 transition-transform border border-transparent group-hover:border-white/5`}>
-                      <item.icon size={16} className={item.color} strokeWidth={2.5} />
+                    <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-orange-50 transition-all duration-200">
+                      <item.icon size={14} className="text-slate-400 group-hover:text-orange-500 transition-colors" />
                     </div>
-                    <span className="text-[10px] font-black text-zinc-500 group-hover:text-white transition-colors uppercase tracking-tighter">{item.label}</span>
+                    <span className="text-[10px] font-bold text-slate-500 group-hover:text-black transition-colors text-center tracking-tight">{item.label}</span>
                   </div>
                 ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      <div className="p-4 border-t border-zinc-800 bg-zinc-950/80 backdrop-blur-md">
-        <button className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-zinc-900 text-zinc-500 hover:text-white transition-all group border border-transparent hover:border-zinc-800">
+      <div className="p-4 border-t border-slate-50">
+        <button className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all group">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-zinc-800 rounded-xl group-hover:bg-zinc-700 transition-colors">
-              <HelpCircle size={14} strokeWidth={2.5} />
+            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
+              <HelpCircle size={16} className="text-slate-400 group-hover:text-orange-500" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest">Help & Guide</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Guide</span>
           </div>
-          <LayoutGrid size={12} className="opacity-0 group-hover:opacity-100 transition-opacity text-accent" />
+          <ChevronRight size={14} className="text-slate-300" />
         </button>
       </div>
     </aside>

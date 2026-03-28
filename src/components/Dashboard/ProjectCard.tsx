@@ -1,15 +1,9 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MoreVertical, Trash2, Edit2, Clock } from 'lucide-react';
+import { MoreVertical, Trash2, Edit2, Clock, Bot as BotIcon } from 'lucide-react';
 import { Bot } from '@/lib/store';
 import useStore from '@/lib/store';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 interface ProjectCardProps {
   bot: Bot;
@@ -18,7 +12,7 @@ interface ProjectCardProps {
 export default function ProjectCard({ bot }: ProjectCardProps) {
   const router = useRouter();
   const { deleteBot, renameBot } = useStore();
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('en-US', {
@@ -32,11 +26,11 @@ export default function ProjectCard({ bot }: ProjectCardProps) {
   return (
     <div 
       onClick={() => router.push(`/bot/${bot.id}/edit`)}
-      className="group relative flex flex-col justify-between p-6 bg-zinc-900/40 border border-zinc-800 rounded-2xl hover:border-accent hover:bg-zinc-800/60 transition-all cursor-pointer shadow-xl hover:shadow-accent/5 backdrop-blur-sm active:scale-[0.98]"
+      className="group relative flex flex-col justify-between p-5 bg-white border-2 border-orange-500 rounded-2xl hover:shadow-xl hover:shadow-orange-500/5 transition-all cursor-pointer active:scale-[0.98] h-[200px]"
     >
-      <div className="flex justify-between items-start mb-4">
-        <div className="p-3 bg-zinc-800 rounded-xl group-hover:bg-zinc-700 transition-colors border border-zinc-700/50">
-          <div className="w-6 h-6 bg-accent rounded-full shadow-[0_0_15px_rgba(255,106,0,0.5)]" />
+      <div className="flex justify-between items-start">
+        <div className="p-2.5 bg-orange-50 rounded-xl border border-orange-100 group-hover:bg-orange-100 transition-all">
+          <BotIcon size={18} className="text-orange-500" />
         </div>
         <div className="relative">
           <button 
@@ -44,13 +38,13 @@ export default function ProjectCard({ bot }: ProjectCardProps) {
               e.stopPropagation();
               setIsMenuOpen(!isMenuOpen);
             }}
-            className="p-1.5 hover:bg-zinc-700 rounded-lg text-zinc-500 hover:text-white transition-colors"
+            className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-black transition-colors"
           >
-            <MoreVertical size={18} />
+            <MoreVertical size={16} />
           </button>
           
           {isMenuOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl py-2 z-10 backdrop-blur-xl">
+            <div className="absolute right-0 mt-2 w-40 bg-white border border-slate-100 rounded-xl shadow-xl py-1.5 z-10">
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
@@ -58,17 +52,17 @@ export default function ProjectCard({ bot }: ProjectCardProps) {
                   if (newName) renameBot(bot.id, newName);
                   setIsMenuOpen(false);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] font-bold text-black hover:bg-slate-50 transition-colors"
               >
                 <Edit2 size={14} /> Rename
               </button>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (confirm('Are you sure you want to delete this bot?')) deleteBot(bot.id);
+                  if (confirm('Delete this bot?')) deleteBot(bot.id);
                   setIsMenuOpen(false);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] font-bold text-red-500 hover:bg-red-50 transition-colors"
               >
                 <Trash2 size={14} /> Delete
               </button>
@@ -77,20 +71,17 @@ export default function ProjectCard({ bot }: ProjectCardProps) {
         </div>
       </div>
 
-      <div>
-        <h3 className="text-lg font-bold text-white mb-1 truncate tracking-tight">{bot.name}</h3>
-        <div className="flex items-center gap-2 mb-4">
-          <span className={cn(
-            "w-2 h-2 rounded-full shadow-[0_0_8px_currentColor]",
-            bot.status === 'Live' ? "text-green-500 bg-green-500" : "text-orange-500 bg-orange-500"
-          )} />
-          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{bot.status}</span>
+      <div className="space-y-1">
+        <h3 className="text-[15px] font-bold text-black truncate group-hover:text-orange-500 transition-colors">{bot.name}</h3>
+        <div className="flex items-center gap-2">
+          <div className={`w-1.5 h-1.5 rounded-full ${bot.status === 'Live' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-slate-200'}`} />
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{bot.status}</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-zinc-600 text-[10px] font-bold uppercase tracking-wider">
+      <div className="pt-4 border-t border-slate-50 flex items-center gap-2 text-slate-300 text-[10px] font-bold uppercase tracking-wider">
         <Clock size={12} />
-        <span>Updated {formatDate(bot.updatedAt)}</span>
+        <span>Modified {formatDate(bot.updatedAt)}</span>
       </div>
     </div>
   );
