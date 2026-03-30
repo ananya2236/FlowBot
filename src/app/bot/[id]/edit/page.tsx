@@ -5,29 +5,14 @@ import useStore from '@/lib/store';
 import EditorNavbar from '@/components/Navbar/EditorNavbar';
 import EditorSidebar from '@/components/Sidebar/EditorSidebar';
 import FlowBuilder from '@/components/FlowBuilder';
-import { 
-  Palette, 
-  Settings as SettingsIcon, 
-  Share2, 
-  Layout, 
-  Copy, 
-  Globe, 
-  Code,
-  CheckCircle2,
-  Clock,
-  Shield,
-  Monitor,
-  Bot,
-  ChevronLeft
-} from 'lucide-react';
+import NodeEditor from '@/components/NodeEditor';
+import { Settings as SettingsIcon, Layout, Bot } from 'lucide-react';
 
 export default function BotEditorPage() {
   const { id } = useParams();
   const { setActiveBot, bots } = useStore();
   const botId = Array.isArray(id) ? id[0] : id;
   const [activeTab, setActiveTab] = useState('Flow');
-  const [copied, setCopied] = useState(false);
-
   useEffect(() => {
     setActiveBot(botId ?? null);
     return () => setActiveBot(null);
@@ -43,7 +28,7 @@ export default function BotEditorPage() {
             <Bot size={32} className="text-orange-500" />
           </div>
           <h1 className="text-2xl font-bold mb-2">Bot not found</h1>
-          <p className="text-slate-500 mb-8 font-medium">The bot you're looking for doesn't exist or has been deleted.</p>
+          <p className="text-slate-500 mb-8 font-medium">The bot you&apos;re looking for doesn&apos;t exist or has been deleted.</p>
           <button 
             onClick={() => window.location.href = '/'}
             className="px-8 py-3 bg-orange-500 text-white rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all"
@@ -64,6 +49,7 @@ export default function BotEditorPage() {
             <main className="flex-1 relative overflow-hidden">
               <FlowBuilder />
             </main>
+            <NodeEditor />
           </div>
         );
       case 'Theme':
@@ -72,7 +58,7 @@ export default function BotEditorPage() {
             <div className="max-w-4xl mx-auto">
               <header className="mb-12">
                 <h2 className="text-4xl font-bold mb-2 tracking-tight text-black">Theme Settings</h2>
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Customize your WhatsApp bot's visual identity</p>
+                <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Customize your WhatsApp bot&apos;s visual identity</p>
               </header>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -106,7 +92,7 @@ export default function BotEditorPage() {
                 <SettingsIcon size={24} className="text-slate-300" />
               </div>
               <h3 className="text-lg font-bold text-black">{activeTab} coming soon</h3>
-              <p className="text-slate-400 text-sm font-medium mt-1">We're working hard to bring this feature to you.</p>
+              <p className="text-slate-400 text-sm font-medium mt-1">We&apos;re working hard to bring this feature to you.</p>
             </div>
           </div>
         );
@@ -115,7 +101,7 @@ export default function BotEditorPage() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-white">
-      <EditorNavbar />
+      <EditorNavbar botId={botId || ''} activeTab={activeTab} setActiveTab={setActiveTab} />
       {renderContent()}
     </div>
   );

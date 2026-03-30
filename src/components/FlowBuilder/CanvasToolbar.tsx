@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { useReactFlow, useStore as useRFStore } from 'reactflow';
+import { Node, useReactFlow, useStore as useRFStore } from 'reactflow';
 import {
   Settings,
   Copy,
@@ -18,15 +18,15 @@ export default function CanvasToolbar() {
 
   // Get selected node count from ReactFlow internal store
   const selectedNodeCount = useRFStore(
-    (state) => state.getNodes().filter((n: any) => n.selected).length
+    (state) => state.getNodes().filter((node: Node) => node.selected).length
   );
   const selectedNodes = useRFStore(
-    (state) => state.getNodes().filter((n: any) => n.selected)
+    (state) => state.getNodes().filter((node: Node) => node.selected)
   );
 
   const handleDeleteSelected = () => {
     if (selectedNodes.length === 0) return;
-    const changes = selectedNodes.map((n: any) => ({ type: 'remove' as const, id: n.id }));
+    const changes = selectedNodes.map((node: Node) => ({ type: 'remove' as const, id: node.id }));
     onNodesChange(changes);
   };
 

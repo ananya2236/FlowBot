@@ -1,7 +1,17 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { nanoid } from 'nanoid';
-import { addEdge, applyNodeChanges, applyEdgeChanges, Node, Edge, Connection } from 'reactflow';
+import {
+  addEdge,
+  applyNodeChanges,
+  applyEdgeChanges,
+  Node,
+  Edge,
+  Connection,
+  NodeChange,
+  EdgeChange,
+} from 'reactflow';
+import type { GroupNodeData } from '@/lib/blocks';
 
 export interface Bot {
   id: string;
@@ -23,11 +33,11 @@ interface BotStore {
   setActiveBot: (id: string | null) => void;
   
   // Flow management for active bot
-  onNodesChange: (changes: any) => void;
-  onEdgesChange: (changes: any) => void;
+  onNodesChange: (changes: NodeChange[]) => void;
+  onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
-  addNode: (type: string, position: { x: number; y: number }, data?: any) => void;
-  updateNodeData: (nodeId: string, data: any) => void;
+  addNode: (type: string, position: { x: number; y: number }, data?: Partial<GroupNodeData>) => void;
+  updateNodeData: (nodeId: string, data: Partial<GroupNodeData>) => void;
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
 }
@@ -41,6 +51,13 @@ const initialNodes: Node[] = [
   },
 ];
 
+const createInitialNodes = (): Node[] =>
+  initialNodes.map((node) => ({
+    ...node,
+    position: { ...node.position },
+    data: { ...node.data },
+  }));
+
 const useStore = create<BotStore>()(
   persist(
     (set, get) => ({
@@ -52,7 +69,7 @@ const useStore = create<BotStore>()(
         const newBot: Bot = {
           id,
           name,
-          nodes: initialNodes,
+          nodes: createInitialNodes(),
           edges: [],
           status: 'Draft',
           updatedAt: Date.now(),
@@ -123,7 +140,7 @@ const useStore = create<BotStore>()(
         }));
       },
 
-      addNode: (type, position, data = {}) => {
+      addNode: (type, position, data: Partial<GroupNodeData> = {}) => {
         const { activeBotId, bots } = get();
         if (!activeBotId) return;
         const activeBot = bots.find((b) => b.id === activeBotId);

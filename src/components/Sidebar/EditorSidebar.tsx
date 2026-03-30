@@ -10,9 +10,7 @@ import {
   Phone,
   Hash,
   Calendar,
-  Search,
   Globe,
-  File,
   Star,
   FileText,
   Clock,
@@ -36,9 +34,17 @@ import {
   LayoutGrid,
   Upload,
   ListChecks,
-  ImageIcon as PicIcon,
   SquareStack,
 } from 'lucide-react';
+import { isSupportedSidebarType } from '@/lib/blocks';
+
+interface SidebarItem {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  color: string;
+  badge?: boolean;
+}
 
 const SECTIONS = [
   {
@@ -108,6 +114,7 @@ export default function EditorSidebar() {
   const [search, setSearch] = React.useState('');
 
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
+    if (!isSupportedSidebarType(nodeType)) return;
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
@@ -142,20 +149,28 @@ export default function EditorSidebar() {
             <div key={section.title} className="mt-4 first:mt-2">
               <h3 className="text-[13px] font-bold text-gray-800 mb-2">{section.title}</h3>
               <div className="grid grid-cols-2 gap-1.5">
-                {filtered.map((item: any) => (
+                {filtered.map((item: SidebarItem) => (
                   <div
                     key={item.id}
-                    draggable
+                    draggable={isSupportedSidebarType(item.id)}
                     onDragStart={(e) => onDragStart(e, item.id)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-grab active:cursor-grabbing bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all text-left relative"
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-gray-200 transition-all text-left relative ${
+                      isSupportedSidebarType(item.id)
+                        ? 'cursor-grab active:cursor-grabbing hover:border-gray-300 hover:shadow-sm'
+                        : 'cursor-not-allowed opacity-55'
+                    }`}
                   >
                     <item.icon size={15} className={`${item.color} shrink-0`} />
                     <span className="text-[12px] font-medium text-gray-700 truncate">{item.label}</span>
-                    {item.badge && (
+                    {!isSupportedSidebarType(item.id) ? (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-500">
+                        Soon
+                      </span>
+                    ) : item.badge ? (
                       <span className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-orange-100 rounded-full flex items-center justify-center">
                         <Lock size={8} className="text-orange-500" />
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 ))}
               </div>

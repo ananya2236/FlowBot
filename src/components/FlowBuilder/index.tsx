@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useRef, useMemo, useState } from 'react';
+import React, { useCallback, useRef, useMemo } from 'react';
 import ReactFlow, {
   Background,
   Panel,
@@ -9,11 +9,11 @@ import ReactFlow, {
   BackgroundVariant,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import GroupNode, { createBlockFromSidebar } from './GroupNode';
+import GroupNode from './GroupNode';
 import StartNode from './StartNode';
 import CanvasToolbar from './CanvasToolbar';
-import PreviewModal from '../Preview/PreviewModal';
 import useStore from '@/lib/store';
+import { createDefaultBlock, createGroupData } from '@/lib/blocks';
 
 const nodeTypes = {
   group: GroupNode,
@@ -50,17 +50,12 @@ const FlowBuilderInner = () => {
         y: event.clientY,
       });
 
-      const block = createBlockFromSidebar(type);
+      const block = createDefaultBlock(type);
       if (!block) return;
 
       const groupsCount = bots.find(b => b.id === activeBotId)?.nodes.filter(n => n.type === 'group').length || 0;
 
-      addNode('group', position, {
-        title: `Group #${groupsCount + 1}`,
-        blocks: [block],
-        bubbles: block.kind === 'bubble' ? [{ id: block.id, type: block.type, content: block.content, meta: block.meta }] : [],
-        inputs: block.kind === 'input' ? [{ id: block.id, type: block.type, variable: block.variable, placeholder: block.placeholder }] : [],
-      });
+      addNode('group', position, createGroupData(`Group #${groupsCount + 1}`, block));
     },
     [screenToFlowPosition, addNode, bots, activeBotId]
   );

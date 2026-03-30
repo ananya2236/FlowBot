@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import useStore from '@/lib/store';
 import ProjectCard from '@/components/Dashboard/ProjectCard';
 import CreateBotButton from '@/components/Dashboard/CreateBotButton';
-import { Bot, LayoutGrid, List, Search, Plus } from 'lucide-react';
+import { Bot, Search } from 'lucide-react';
 
 export default function Dashboard() {
   const { bots } = useStore();
