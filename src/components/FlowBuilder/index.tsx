@@ -20,6 +20,10 @@ const nodeTypes = {
   start: StartNode,
 };
 
+const proOptions = { hideAttribution: true };
+const emptyNodes: never[] = [];
+const emptyEdges: never[] = [];
+
 const FlowBuilderInner = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
@@ -84,8 +88,8 @@ const FlowBuilderInner = () => {
   return (
     <div className="w-full h-full min-h-0 relative" ref={reactFlowWrapper}>
       <ReactFlow
-        nodes={activeBot?.nodes || []}
-        edges={safeEdges}
+        nodes={activeBot?.nodes || emptyNodes}
+        edges={safeEdges || emptyEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
@@ -97,7 +101,7 @@ const FlowBuilderInner = () => {
         snapToGrid
         snapGrid={snapGrid}
         defaultEdgeOptions={defaultEdgeOptions}
-        proOptions={{ hideAttribution: true }}
+        proOptions={proOptions}
       >
         <Background
           variant={BackgroundVariant.Dots}
