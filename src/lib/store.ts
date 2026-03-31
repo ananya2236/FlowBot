@@ -25,12 +25,16 @@ export interface Bot {
 interface BotStore {
   bots: Bot[];
   activeBotId: string | null;
+  editorNodeId: string | null;
   
   // Bot management
   createBot: (name?: string) => string;
   deleteBot: (id: string) => void;
   renameBot: (id: string, name: string) => void;
   setActiveBot: (id: string | null) => void;
+  
+  // Editor panel
+  setEditorNodeId: (id: string | null) => void;
   
   // Flow management for active bot
   onNodesChange: (changes: NodeChange[]) => void;
@@ -63,6 +67,7 @@ const useStore = create<BotStore>()(
     (set, get) => ({
       bots: [],
       activeBotId: null,
+      editorNodeId: null,
 
       createBot: (name = 'My Spinabot') => {
         const id = nanoid();
@@ -95,7 +100,11 @@ const useStore = create<BotStore>()(
       },
 
       setActiveBot: (id) => {
-        set({ activeBotId: id });
+        set({ activeBotId: id, editorNodeId: null });
+      },
+
+      setEditorNodeId: (id) => {
+        set({ editorNodeId: id });
       },
 
       onNodesChange: (changes) => {
@@ -208,6 +217,7 @@ const useStore = create<BotStore>()(
     {
       name: 'bot-storage',
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ bots: state.bots, activeBotId: state.activeBotId }),
     }
   )
 );

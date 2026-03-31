@@ -17,6 +17,7 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    zoom: 0.8;
   }
 
   body {
@@ -266,8 +267,8 @@
 
 /* Scrollbar customization */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -281,4 +282,52 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #CBD5E1;
+}
+
+/* ── Editor Panel ── */
+.editor-panel-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.editor-panel-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.editor-panel-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+.editor-panel-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+/* Panel slide-in animation */
+@keyframes panel-slide-in {
+  from { transform: translateX(100%); opacity: 0.8; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes panel-slide-out {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0.8; }
+}
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Section expand animation */
+@keyframes section-expand {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 2000px; }
+}
+.section-content-enter {
+  animation: section-expand 0.2s ease-out forwards;
+  overflow: hidden;
+}
+
+/* Focus ring for all panel inputs */
+.editor-panel input:focus,
+.editor-panel textarea:focus,
+.editor-panel select:focus {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.08) !important;
+  outline: none;
 }

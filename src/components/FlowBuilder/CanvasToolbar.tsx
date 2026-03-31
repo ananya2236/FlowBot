@@ -14,7 +14,7 @@ import useStore from '@/lib/store';
 
 export default function CanvasToolbar() {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
-  const { onNodesChange } = useStore();
+  const { onNodesChange, editorNodeId, setEditorNodeId } = useStore();
 
   // Get selected node count from ReactFlow internal store
   const selectedNodeCount = useRFStore(
@@ -48,7 +48,12 @@ export default function CanvasToolbar() {
         <div className="toolbar-section selection-section">
           <span className="selection-badge">{selectedNodeCount} selected</span>
           <button
-            onClick={() => {}}
+            onClick={() => {
+              const firstSelected = selectedNodes[0];
+              if (firstSelected) {
+                setEditorNodeId(editorNodeId === firstSelected.id ? null : firstSelected.id);
+              }
+            }}
             className="toolbar-btn"
             title="Settings"
           >

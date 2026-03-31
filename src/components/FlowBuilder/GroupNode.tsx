@@ -30,6 +30,7 @@ import {
   GitBranch,
   Code2,
   ArrowRight,
+  Settings2,
 } from 'lucide-react';
 import {
   Block,
@@ -311,53 +312,69 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
       tabIndex={0}
     >
       {selected && (
-        <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-white border border-gray-200 rounded-lg shadow-sm px-1 py-0.5 z-50 nodrag nopan">
-          <button className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors" title="Test group">
-            <Play size={14} />
+        <div className="absolute -top-11 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-1.5 py-1 z-50 nodrag nopan"
+          style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)' }}
+        >
+          <button className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-md transition-colors" title="Test group">
+            <Play size={13} />
           </button>
           <button
+            onClick={(event) => {
+              event.stopPropagation();
+              const { editorNodeId, setEditorNodeId } = useStore.getState();
+              setEditorNodeId(editorNodeId === id ? null : id);
+            }}
+            className="p-1.5 text-slate-400 hover:text-orange-500 hover:bg-orange-50 rounded-md transition-colors"
+            title="Settings"
+          >
+            <Settings2 size={13} />
+          </button>
+          <div className="w-px h-4 bg-slate-150 mx-0.5" />
+          <button
             onClick={duplicateGroup}
-            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-md transition-colors"
             title="Duplicate group"
           >
-            <Copy size={14} />
+            <Copy size={13} />
           </button>
           <button
             onClick={() => {
               const { onNodesChange } = useStore.getState();
               onNodesChange([{ type: 'remove', id }]);
             }}
-            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
             title="Delete group"
           >
-            <Trash2 size={14} />
+            <Trash2 size={13} />
           </button>
         </div>
       )}
 
       <Handle type="target" position={Position.Left} id="main-target" className="!-left-[6px]" style={{ top: 24 }} />
 
-      <div className="typebot-group-header">
-        {editingTitle ? (
-          <input
-            autoFocus
-            value={title}
-            onChange={(event) => patchGroup({ title: event.target.value })}
-            onBlur={() => setEditingTitle(false)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') setEditingTitle(false);
-            }}
-            className="nodrag nopan bg-transparent border-none p-0 text-[13px] font-semibold text-gray-800 w-full outline-none focus:text-black"
-            placeholder="Group title"
-          />
-        ) : (
-          <span
-            onDoubleClick={() => setEditingTitle(true)}
-            className="text-[13px] font-semibold text-gray-800 cursor-default select-none block w-full truncate"
-          >
-            {title || 'Group title'}
-          </span>
-        )}
+      <div className="typebot-group-header flex items-center gap-1">
+        <div className="flex-1 min-w-0">
+          {editingTitle ? (
+            <input
+              autoFocus
+              value={title}
+              onChange={(event) => patchGroup({ title: event.target.value })}
+              onBlur={() => setEditingTitle(false)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') setEditingTitle(false);
+              }}
+              className="nodrag nopan bg-transparent border-none p-0 text-[13px] font-semibold text-gray-800 w-full outline-none focus:text-black"
+              placeholder="Group title"
+            />
+          ) : (
+            <span
+              onDoubleClick={() => setEditingTitle(true)}
+              className="text-[13px] font-semibold text-gray-800 cursor-default select-none block w-full truncate"
+            >
+              {title || 'Group title'}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col pb-2">
