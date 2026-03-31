@@ -3,18 +3,17 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Undo2, Redo2, HelpCircle, Share2, Play, FileText } from 'lucide-react';
 import useStore from '@/lib/store';
-import PreviewModal from '../Preview/PreviewModal';
 
 interface EditorNavbarProps {
   botId: string;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  onTestClick: () => void;
 }
 
-export default function EditorNavbar({ botId, activeTab, setActiveTab }: EditorNavbarProps) {
+export default function EditorNavbar({ botId, activeTab, setActiveTab, onTestClick }: EditorNavbarProps) {
   const router = useRouter();
   const { bots, renameBot } = useStore();
-  const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
   const bot = bots.find((b) => b.id === botId);
 
   if (!bot) return null;
@@ -80,7 +79,7 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab }: EditorN
             Share
           </button>
           <button
-            onClick={() => setIsPreviewOpen(true)}
+            onClick={onTestClick}
             className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium text-gray-600 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
           >
             <Play size={12} />
@@ -91,7 +90,6 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab }: EditorN
           </button>
         </div>
       </nav>
-      <PreviewModal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} />
     </>
   );
 }

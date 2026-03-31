@@ -6,6 +6,7 @@ import EditorNavbar from '@/components/Navbar/EditorNavbar';
 import EditorSidebar from '@/components/Sidebar/EditorSidebar';
 import FlowBuilder from '@/components/FlowBuilder';
 import NodeEditor from '@/components/NodeEditor';
+import PreviewModal from '@/components/Preview/PreviewModal';
 import { Settings as SettingsIcon, Layout, Bot } from 'lucide-react';
 
 export default function BotEditorPage() {
@@ -13,6 +14,7 @@ export default function BotEditorPage() {
   const { setActiveBot, bots } = useStore();
   const botId = Array.isArray(id) ? id[0] : id;
   const [activeTab, setActiveTab] = useState('Flow');
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   useEffect(() => {
     setActiveBot(botId ?? null);
     return () => setActiveBot(null);
@@ -44,9 +46,9 @@ export default function BotEditorPage() {
     switch (activeTab) {
       case 'Flow':
         return (
-          <div className="flex flex-1 relative overflow-hidden bg-white">
+          <div className="flex flex-1 min-h-0 relative overflow-hidden bg-white">
             <EditorSidebar />
-            <main className="flex-1 relative overflow-hidden">
+            <main className="flex-1 h-full min-h-0 relative overflow-hidden">
               <FlowBuilder />
             </main>
             <NodeEditor />
@@ -101,8 +103,14 @@ export default function BotEditorPage() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-white">
-      <EditorNavbar botId={botId || ''} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <EditorNavbar
+        botId={botId || ''}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onTestClick={() => setIsPreviewOpen(true)}
+      />
       {renderContent()}
+      <PreviewModal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} botId={botId || ''} />
     </div>
   );
 }

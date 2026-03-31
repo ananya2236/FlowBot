@@ -12,6 +12,14 @@ import {
   Mail,
   Calendar,
   Phone,
+  Globe,
+  Clock3,
+  ListChecks,
+  LayoutGrid,
+  CreditCard,
+  Star,
+  Upload,
+  SquareStack,
   Type as TypeIcon,
   Play,
   Copy,
@@ -19,14 +27,23 @@ import {
   FileText,
   CheckCircle2,
   AlertCircle,
+  GitBranch,
+  Code2,
+  ArrowRight,
 } from 'lucide-react';
 import {
   Block,
   BubbleBlock,
+  ConditionBlock,
   GroupNodeData,
   InputBlock,
+  LogicBlock,
   createDefaultBlock,
+  getBlockHandleId,
   getBlockLabel,
+  getBlockSummary,
+  getInputBranchKey,
+  getInputBranches,
   isSupportedSidebarType,
   migrateToBlocks,
 } from '@/lib/blocks';
@@ -44,11 +61,62 @@ const BLOCK_TYPES: Record<string, { icon: IconComponent; color: string; bg: stri
   input_email: { icon: Mail, color: 'text-orange-600', bg: 'bg-orange-50' },
   input_phone: { icon: Phone, color: 'text-orange-600', bg: 'bg-orange-50' },
   input_date: { icon: Calendar, color: 'text-orange-600', bg: 'bg-orange-50' },
+  input_website: { icon: Globe, color: 'text-orange-600', bg: 'bg-orange-50' },
+  input_time: { icon: Clock3, color: 'text-orange-600', bg: 'bg-orange-50' },
+  input_buttons: { icon: ListChecks, color: 'text-orange-600', bg: 'bg-orange-50' },
+  input_pic_choice: { icon: LayoutGrid, color: 'text-orange-600', bg: 'bg-orange-50' },
+  input_payment: { icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-50' },
+  input_rating: { icon: Star, color: 'text-orange-600', bg: 'bg-orange-50' },
+  input_file: { icon: Upload, color: 'text-orange-600', bg: 'bg-orange-50' },
+  input_cards: { icon: SquareStack, color: 'text-orange-600', bg: 'bg-orange-50' },
+  logic_set_variable: { icon: Code2, color: 'text-fuchsia-600', bg: 'bg-fuchsia-50' },
+  logic_condition: { icon: GitBranch, color: 'text-violet-600', bg: 'bg-violet-50' },
+  logic_redirect: { icon: ArrowRight, color: 'text-purple-600', bg: 'bg-purple-50' },
 };
 
+const MENU_SECTIONS = [
+  {
+    title: 'Bubbles',
+    items: [
+      { id: 'text', label: 'Text', icon: MessageSquare, color: 'text-blue-500' },
+      { id: 'image', label: 'Image', icon: ImageIcon, color: 'text-purple-500' },
+      { id: 'video', label: 'Video', icon: Video, color: 'text-indigo-500' },
+      { id: 'audio', label: 'Audio', icon: Mic, color: 'text-emerald-500' },
+      { id: 'embed', label: 'Embed', icon: FileText, color: 'text-slate-500' },
+    ],
+  },
+  {
+    title: 'Inputs',
+    items: [
+      { id: 'input_text', label: 'Text', icon: TypeIcon, color: 'text-orange-500' },
+      { id: 'input_number', label: 'Number', icon: Hash, color: 'text-orange-500' },
+      { id: 'input_email', label: 'Email', icon: Mail, color: 'text-orange-500' },
+      { id: 'input_website', label: 'Website', icon: Globe, color: 'text-orange-500' },
+      { id: 'input_phone', label: 'Phone', icon: Phone, color: 'text-orange-500' },
+      { id: 'input_date', label: 'Date', icon: Calendar, color: 'text-orange-500' },
+      { id: 'input_time', label: 'Time', icon: Clock3, color: 'text-orange-500' },
+      { id: 'input_buttons', label: 'Buttons', icon: ListChecks, color: 'text-orange-500' },
+      { id: 'input_pic_choice', label: 'Pic choice', icon: LayoutGrid, color: 'text-orange-500' },
+      { id: 'input_payment', label: 'Payment', icon: CreditCard, color: 'text-orange-500' },
+      { id: 'input_rating', label: 'Rating', icon: Star, color: 'text-orange-500' },
+      { id: 'input_file', label: 'File', icon: Upload, color: 'text-orange-500' },
+      { id: 'input_cards', label: 'Cards', icon: SquareStack, color: 'text-orange-500' },
+    ],
+  },
+  {
+    title: 'Logic',
+    items: [
+      { id: 'logic_set_variable', label: 'Set variable', icon: Code2, color: 'text-fuchsia-500' },
+      { id: 'logic_condition', label: 'Condition', icon: GitBranch, color: 'text-violet-500' },
+      { id: 'logic_redirect', label: 'Redirect', icon: ArrowRight, color: 'text-purple-500' },
+    ],
+  },
+];
+
 function getVisuals(block: Block) {
-  const key = block.kind === 'input' ? `input_${block.type}` : block.type;
-  return BLOCK_TYPES[key] || BLOCK_TYPES.text;
+  if (block.kind === 'bubble') return BLOCK_TYPES[block.type] || BLOCK_TYPES.text;
+  if (block.kind === 'input') return BLOCK_TYPES[`input_${block.type}`] || BLOCK_TYPES.input_text;
+  return BLOCK_TYPES[`logic_${block.type}`] || BLOCK_TYPES.logic_redirect;
 }
 
 function syncNodeData(
@@ -58,11 +126,32 @@ function syncNodeData(
   blocks: Block[],
   activeBlockId: string | null
 ) {
-  updateNodeData(nodeId, {
-    title,
-    blocks,
-    activeBlockId,
-  });
+  updateNodeData(nodeId, { title, blocks, activeBlockId });
+}
+
+function getBlockHandles(block: Block) {
+  if (block.kind === 'logic' && block.type === 'condition') {
+    const condition = block as ConditionBlock;
+    return [
+      { id: getBlockHandleId(block.id, 'true'), label: condition.trueLabel || 'True', top: '35%' },
+      { id: getBlockHandleId(block.id, 'false'), label: condition.falseLabel || 'False', top: '68%' },
+    ];
+  }
+
+  if (block.kind === 'input') {
+    const input = block as InputBlock;
+    const branches = getInputBranches(input);
+    if (branches.length) {
+      const step = 100 / (branches.length + 1);
+      return branches.map((branch, index) => ({
+        id: getBlockHandleId(block.id, getInputBranchKey(branch.value)),
+        label: branch.label,
+        top: `${Math.round(step * (index + 1))}%`,
+      }));
+    }
+  }
+
+  return [{ id: getBlockHandleId(block.id), label: '', top: '50%' }];
 }
 
 const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; selected: boolean }) => {
@@ -88,7 +177,13 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
   }, []);
 
   const patchGroup = useCallback((patch: Partial<GroupNodeData>) => {
-    syncNodeData(updateNodeData, id, patch.title ?? title, patch.blocks ?? blocks, patch.activeBlockId ?? activeBlockId);
+    syncNodeData(
+      updateNodeData,
+      id,
+      patch.title ?? title,
+      patch.blocks ?? blocks,
+      patch.activeBlockId ?? activeBlockId
+    );
   }, [activeBlockId, blocks, id, title, updateNodeData]);
 
   const addBlock = useCallback((sidebarType: string) => {
@@ -111,20 +206,22 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
   const duplicateGroup = useCallback(() => {
     const { addNode } = useStore.getState();
     const nextBlocks = blocks.map((block) => {
-      const clone = createDefaultBlock(block.kind === 'input' ? `input_${block.type}` : block.type);
+      const sourceType =
+        block.kind === 'bubble'
+          ? block.type
+          : block.kind === 'input'
+            ? `input_${block.type}`
+            : `logic_${block.type}`;
+      const clone = createDefaultBlock(sourceType);
       if (!clone) return block;
       return { ...clone, ...block, id: clone.id };
     });
 
-    addNode(
-      'group',
-      { x: 40, y: 40 },
-      {
-        title: `${title} Copy`,
-        blocks: nextBlocks,
-        activeBlockId: nextBlocks[0]?.id || null,
-      }
-    );
+    addNode('group', { x: 40, y: 40 }, {
+      title: `${title} Copy`,
+      blocks: nextBlocks,
+      activeBlockId: nextBlocks[0]?.id || null,
+    });
   }, [blocks, title]);
 
   const onBlockDragStart = useCallback((event: React.DragEvent, index: number) => {
@@ -143,6 +240,7 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
   const onZoneDrop = useCallback((event: React.DragEvent, targetIndex: number) => {
     event.preventDefault();
     event.stopPropagation();
+
     const sourceIndexRaw = event.dataTransfer.getData('application/block-reorder');
     const externalType = event.dataTransfer.getData('application/reactflow');
 
@@ -150,10 +248,10 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
       const sourceIndex = Number.parseInt(sourceIndexRaw, 10);
       if (!Number.isNaN(sourceIndex) && sourceIndex !== targetIndex && sourceIndex !== targetIndex - 1) {
         const next = [...blocks];
-          const [moved] = next.splice(sourceIndex, 1);
-          const destination = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
-          next.splice(destination, 0, moved);
-          patchGroup({ blocks: next });
+        const [moved] = next.splice(sourceIndex, 1);
+        const destination = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+        next.splice(destination, 0, moved);
+        patchGroup({ blocks: next });
       }
     } else if (isSupportedSidebarType(externalType)) {
       const block = createDefaultBlock(externalType);
@@ -205,7 +303,7 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
 
   return (
     <div
-      className={`typebot-group w-[320px] ${selected ? 'selected' : ''}`}
+      className={`typebot-group w-[340px] ${selected ? 'selected' : ''}`}
       onDragOver={onGroupDragOver}
       onDrop={onGroupDrop}
       role="group"
@@ -266,6 +364,7 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
         {blocks.map((block, index) => {
           const visuals = getVisuals(block);
           const isActive = activeBlockId === block.id;
+          const handles = getBlockHandles(block);
 
           return (
             <React.Fragment key={block.id}>
@@ -287,12 +386,18 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
                   <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${visuals.bg}`}>
                     <visuals.icon size={12} className={visuals.color} />
                   </div>
-                  <div className="flex-1 min-w-0">
+
+                  <div className="flex-1 min-w-0 pr-10">
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <span className="text-[11px] font-semibold text-slate-700">{getBlockLabel(block)}</span>
                       {block.kind === 'input' && (
                         <span className="text-[10px] text-orange-600 font-semibold uppercase tracking-wide">
-                          {block.validation.required ? 'Required' : 'Optional'}
+                          {(block as InputBlock).validation.required ? 'Required' : 'Optional'}
+                        </span>
+                      )}
+                      {block.kind === 'logic' && (
+                        <span className="text-[10px] text-violet-600 font-semibold uppercase tracking-wide">
+                          Logic
                         </span>
                       )}
                     </div>
@@ -300,13 +405,25 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
                   </div>
                 </div>
 
-                <Handle
-                  type="source"
-                  position={Position.Right}
-                  id={`handle-${block.id}`}
-                  className="!-right-[6px]"
-                  style={{ top: '50%', transform: 'translateY(-50%)' }}
-                />
+                {handles.map((handle) => (
+                  <React.Fragment key={handle.id}>
+                    {handle.label ? (
+                      <span
+                        className="absolute right-4 text-[9px] font-semibold uppercase tracking-wide text-slate-400"
+                        style={{ top: handle.top }}
+                      >
+                        {handle.label}
+                      </span>
+                    ) : null}
+                    <Handle
+                      type="source"
+                      position={Position.Right}
+                      id={handle.id}
+                      className="!-right-[6px]"
+                      style={{ top: handle.top, transform: 'translateY(-50%)' }}
+                    />
+                  </React.Fragment>
+                ))}
               </div>
             </React.Fragment>
           );
@@ -347,7 +464,6 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
 const BlockContent = ({ block, onUpdate }: { block: Block; onUpdate: (partial: Partial<Block>) => void }) => {
   if (block.kind === 'bubble') {
     const bubble = block as BubbleBlock;
-
     if (bubble.type === 'text') {
       return (
         <textarea
@@ -375,54 +491,65 @@ const BlockContent = ({ block, onUpdate }: { block: Block; onUpdate: (partial: P
     );
   }
 
-  const input = block as InputBlock;
+  if (block.kind === 'input') {
+    const input = block as InputBlock;
+    return (
+      <div className="space-y-1">
+        <input
+          value={input.prompt}
+          onChange={(event) => onUpdate({ prompt: event.target.value })}
+          placeholder="Question shown before this input"
+          className="nodrag nopan w-full bg-transparent border-none p-0 text-[12px] font-medium text-slate-600 placeholder:text-slate-400 outline-none"
+        />
+        <div className="flex items-center justify-between gap-2 text-[10px]">
+          <span className="truncate text-slate-400">Variable: {input.variable}</span>
+          <span className="text-slate-400">{input.buttonLabel}</span>
+        </div>
+        <div className="flex items-center gap-1 text-[10px] text-slate-400">
+          {input.validation.required ? (
+            <CheckCircle2 size={11} className="text-emerald-500" />
+          ) : (
+            <AlertCircle size={11} className="text-amber-500" />
+          )}
+          <span className="truncate">{input.placeholder}</span>
+        </div>
+        {input.options?.length ? (
+          <div className="flex flex-wrap gap-1">
+            {input.options.slice(0, 3).map((option) => (
+              <span key={option.id} className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-500">
+                {option.label}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        {input.type === 'payment' ? (
+          <div className="text-[10px] text-slate-400">
+            {input.currency} {input.amount}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  const logic = block as LogicBlock;
 
   return (
     <div className="space-y-1">
-      <input
-        value={input.prompt}
-        onChange={(event) => onUpdate({ prompt: event.target.value })}
-        placeholder="Question shown before this input"
-        className="nodrag nopan w-full bg-transparent border-none p-0 text-[12px] font-medium text-slate-600 placeholder:text-slate-400 outline-none"
-      />
-      <div className="flex items-center justify-between gap-2 text-[10px]">
-        <span className="truncate text-slate-400">Variable: {input.variable}</span>
-        <span className="text-slate-400">{input.buttonLabel}</span>
-      </div>
-      <div className="flex items-center gap-1 text-[10px] text-slate-400">
-        {input.validation.required ? (
-          <CheckCircle2 size={11} className="text-emerald-500" />
-        ) : (
-          <AlertCircle size={11} className="text-amber-500" />
-        )}
-        <span className="truncate">{input.placeholder}</span>
-      </div>
+      <div className="text-[12px] font-medium text-slate-600">{getBlockSummary(logic)}</div>
+      {logic.type === 'condition' ? (
+        <div className="flex items-center gap-2 text-[10px] text-violet-500">
+          <span>{logic.trueLabel}</span>
+          <span>/</span>
+          <span>{logic.falseLabel}</span>
+        </div>
+      ) : (
+        <div className="text-[10px] text-slate-400">
+          {logic.type === 'set_variable' ? 'Updates preview variables' : 'Follows the connected path'}
+        </div>
+      )}
     </div>
   );
 };
-
-const MENU_SECTIONS = [
-  {
-    title: 'Bubbles',
-    items: [
-      { id: 'text', label: 'Text', icon: MessageSquare, color: 'text-blue-500' },
-      { id: 'image', label: 'Image', icon: ImageIcon, color: 'text-purple-500' },
-      { id: 'video', label: 'Video', icon: Video, color: 'text-indigo-500' },
-      { id: 'audio', label: 'Audio', icon: Mic, color: 'text-emerald-500' },
-      { id: 'embed', label: 'Embed', icon: FileText, color: 'text-slate-500' },
-    ],
-  },
-  {
-    title: 'Inputs',
-    items: [
-      { id: 'input_text', label: 'Text', icon: TypeIcon, color: 'text-orange-500' },
-      { id: 'input_number', label: 'Number', icon: Hash, color: 'text-orange-500' },
-      { id: 'input_email', label: 'Email', icon: Mail, color: 'text-orange-500' },
-      { id: 'input_phone', label: 'Phone', icon: Phone, color: 'text-orange-500' },
-      { id: 'input_date', label: 'Date', icon: Calendar, color: 'text-orange-500' },
-    ],
-  },
-];
 
 const AddBlockMenu = ({ onAdd }: { onAdd: (type: string) => void }) => (
   <div className="absolute bottom-full left-0 w-full mb-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">

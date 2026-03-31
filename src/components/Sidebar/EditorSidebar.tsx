@@ -71,7 +71,7 @@ const SECTIONS = [
       { id: 'input_pic_choice', label: 'Pic choice', icon: LayoutGrid, color: 'text-orange-500' },
       { id: 'input_payment', label: 'Payment', icon: CreditCard, color: 'text-orange-500' },
       { id: 'input_rating', label: 'Rating', icon: Star, color: 'text-orange-500' },
-      { id: 'input_file', label: 'File', icon: Upload, color: 'text-orange-500', badge: true },
+      { id: 'input_file', label: 'File', icon: Upload, color: 'text-orange-500' },
       { id: 'input_cards', label: 'Cards', icon: SquareStack, color: 'text-orange-500' },
     ],
   },

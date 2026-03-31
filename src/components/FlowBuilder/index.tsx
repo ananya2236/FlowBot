@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useRef, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useMemo } from 'react';
 import ReactFlow, {
   Background,
   Panel,
@@ -13,7 +13,7 @@ import GroupNode from './GroupNode';
 import StartNode from './StartNode';
 import CanvasToolbar from './CanvasToolbar';
 import useStore from '@/lib/store';
-import { createDefaultBlock, createGroupData } from '@/lib/blocks';
+import { createDefaultBlock, createGroupData, sanitizeFlowEdges } from '@/lib/blocks';
 
 const nodeTypes = {
   group: GroupNode,
@@ -31,6 +31,7 @@ const FlowBuilderInner = () => {
     onEdgesChange, 
     onConnect, 
     addNode,
+    setEdges,
   } = useStore();
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -61,6 +62,16 @@ const FlowBuilderInner = () => {
   );
 
   const activeBot = bots.find(b => b.id === activeBotId);
+  const safeEdges = useMemo(() => {
+    if (!activeBot) return [];
+    return sanitizeFlowEdges(activeBot.edges, activeBot.nodes);
+  }, [activeBot]);
+
+  useEffect(() => {
+    if (!activeBot) return;
+    if (safeEdges.length === activeBot.edges.length) return;
+    setEdges(safeEdges);
+  }, [activeBot, safeEdges, setEdges]);
 
   const defaultEdgeOptions = useMemo(() => ({
     type: 'default',
@@ -71,10 +82,10 @@ const FlowBuilderInner = () => {
   const snapGrid: [number, number] = useMemo(() => [12, 12], []);
 
   return (
-    <div className="w-full h-full relative" ref={reactFlowWrapper}>
+    <div className="w-full h-full min-h-0 relative" ref={reactFlowWrapper}>
       <ReactFlow
         nodes={activeBot?.nodes || []}
-        edges={activeBot?.edges || []}
+        edges={safeEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}

@@ -11,7 +11,7 @@ import {
   NodeChange,
   EdgeChange,
 } from 'reactflow';
-import type { GroupNodeData } from '@/lib/blocks';
+import { sanitizeFlowEdges, type GroupNodeData } from '@/lib/blocks';
 
 export interface Bot {
   id: string;
@@ -131,8 +131,9 @@ const useStore = create<BotStore>()(
         if (!activeBotId) return;
         const activeBot = bots.find((b) => b.id === activeBotId);
         if (!activeBot) return;
+        if (connection.sourceHandle === 'main-target') return;
 
-        const updatedEdges = addEdge(connection, activeBot.edges);
+        const updatedEdges = sanitizeFlowEdges(addEdge(connection, activeBot.edges), activeBot.nodes);
         set((state) => ({
           bots: state.bots.map((b) =>
             b.id === activeBotId ? { ...b, edges: updatedEdges, updatedAt: Date.now() } : b
