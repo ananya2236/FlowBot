@@ -42,6 +42,7 @@ import {
   createDefaultBlock,
   getBlockHandleId,
   getBlockLabel,
+  getBubbleAttachmentUrl,
   getBlockSummary,
   getInputBranchKey,
   getInputBranches,
@@ -500,9 +501,16 @@ const BlockContent = ({ block, onUpdate }: { block: Block; onUpdate: (partial: P
 
     return (
       <input
-        value={bubble.content}
-        onChange={(event) => onUpdate({ content: event.target.value })}
-        placeholder={`Paste a ${bubble.type} URL...`}
+        value={getBubbleAttachmentUrl(bubble)}
+        onChange={(event) =>
+          onUpdate({
+            content: event.target.value,
+            attachmentSource: 'link',
+            attachmentUrl: event.target.value,
+            driveLink: '',
+          })
+        }
+        placeholder={`Paste a ${bubble.type} link...`}
         className="nodrag nopan w-full bg-transparent border-none p-0 text-[12px] text-gray-500 placeholder:text-gray-400 outline-none"
       />
     );

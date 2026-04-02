@@ -31,6 +31,7 @@ interface BotStore {
   createBot: (name?: string) => string;
   deleteBot: (id: string) => void;
   renameBot: (id: string, name: string) => void;
+  setBotStatus: (id: string, status: Bot['status']) => void;
   setActiveBot: (id: string | null) => void;
   
   // Editor panel
@@ -96,6 +97,12 @@ const useStore = create<BotStore>()(
       renameBot: (id, name) => {
         set((state) => ({
           bots: state.bots.map((b) => (b.id === id ? { ...b, name, updatedAt: Date.now() } : b)),
+        }));
+      },
+
+      setBotStatus: (id, status) => {
+        set((state) => ({
+          bots: state.bots.map((b) => (b.id === id ? { ...b, status, updatedAt: Date.now() } : b)),
         }));
       },
 

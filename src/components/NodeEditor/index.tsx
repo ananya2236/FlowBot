@@ -30,6 +30,7 @@ import {
   SetVariableBlock,
   formatVariableName,
   getBlockLabel,
+  getBubbleAttachmentUrl,
   getBlockSummary,
   migrateToBlocks,
 } from '@/lib/blocks';
@@ -365,28 +366,132 @@ const Hint = ({ children }: { children: React.ReactNode }) => (
 
 const inputClass = "w-full rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[13px] text-slate-800 placeholder:text-slate-300 outline-none transition-all focus:border-orange-400 focus:ring-2 focus:ring-orange-100";
 
-const BubbleSettings = ({ block, onChange }: { block: BubbleBlock; onChange: (p: Partial<BubbleBlock>) => void }) => (
-  <div className="space-y-3">
-    <Field label="Content">
-      {block.type === 'text' ? (
-        <textarea
-          value={block.content}
-          onChange={(e) => onChange({ content: e.target.value })}
-          rows={4}
-          className={inputClass + " resize-none"}
-          placeholder="Write the message your bot should send..."
-        />
-      ) : (
-        <input
-          value={block.content}
-          onChange={(e) => onChange({ content: e.target.value })}
-          className={inputClass}
-          placeholder="Paste the URL that should be shown in preview"
-        />
-      )}
-    </Field>
-  </div>
-);
+function getMediaAcceptTypes(type: BubbleBlock['type']) {
+  if (type === 'image') return 'image/*';
+  if (type === 'video') return 'video/*';
+  if (type === 'audio') return 'audio/*';
+  return '';
+}
+
+const BubbleSettings = ({ block, onChange }: { block: BubbleBlock; onChange: (p: Partial<BubbleBlock>) => void }) => {
+  const deviceInputRef = React.useRef<HTMLInputElement>(null);
+  const attachmentUrl = getBubbleAttachmentUrl(block);
+  const isMediaBlock = block.type !== 'text';
+  const sourceLabel =
+    block.attachmentSource === 'device'
+      ? 'Device file'
+      : block.attachmentSource === 'drive'
+        ? 'Drive link'
+        : 'Direct link';
+
+  const attachFromDevice = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === 'string' ? reader.result : '';
+      if (!dataUrl) return;
+
+      onChange({
+        content: dataUrl,
+        attachmentSource: 'device',
+        attachmentUrl: dataUrl,
+        attachmentName: file.name,
+        attachmentMimeType: file.type,
+        driveLink: '',
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="space-y-3">
+      <Field label="Content">
+        {block.type === 'text' ? (
+          <textarea
+            value={block.content}
+            onChange={(e) => onChange({ content: e.target.value })}
+            rows={4}
+            className={inputClass + " resize-none"}
+            placeholder="Write the message your bot should send..."
+          />
+        ) : (
+          <div className="space-y-2">
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => deviceInputRef.current?.click()}
+                className="rounded-md border border-slate-200 px-2 py-1.5 text-[11px] font-semibold text-slate-600 hover:border-orange-300 hover:text-orange-600"
+              >
+                Device
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ attachmentSource: 'drive' })}
+                className="rounded-md border border-slate-200 px-2 py-1.5 text-[11px] font-semibold text-slate-600 hover:border-orange-300 hover:text-orange-600"
+              >
+                Drive
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ attachmentSource: 'link' })}
+                className="rounded-md border border-slate-200 px-2 py-1.5 text-[11px] font-semibold text-slate-600 hover:border-orange-300 hover:text-orange-600"
+              >
+                Link
+              </button>
+            </div>
+
+            <input
+              ref={deviceInputRef}
+              type="file"
+              accept={getMediaAcceptTypes(block.type)}
+              className="hidden"
+              onChange={attachFromDevice}
+            />
+
+            {block.attachmentSource === 'drive' ? (
+              <input
+                value={block.driveLink || ''}
+                onChange={(event) =>
+                  onChange({
+                    driveLink: event.target.value,
+                    content: event.target.value,
+                    attachmentSource: 'drive',
+                    attachmentUrl: event.target.value,
+                  })
+                }
+                className={inputClass}
+                placeholder="Paste Google Drive / OneDrive file link"
+              />
+            ) : (
+              <input
+                value={attachmentUrl}
+                onChange={(event) =>
+                  onChange({
+                    content: event.target.value,
+                    attachmentSource: 'link',
+                    attachmentUrl: event.target.value,
+                    driveLink: '',
+                  })
+                }
+                className={inputClass}
+                placeholder={`Paste a ${block.type} URL`}
+              />
+            )}
+
+            {isMediaBlock ? (
+              <div className="flex items-center justify-between rounded-md bg-slate-50 px-2.5 py-2 text-[11px] text-slate-500">
+                <span>Source: {sourceLabel}</span>
+                {block.attachmentName ? <span className="truncate max-w-[170px]">{block.attachmentName}</span> : null}
+              </div>
+            ) : null}
+          </div>
+        )}
+      </Field>
+    </div>
+  );
+};
 
 const InputSettings = ({ block, onChange }: { block: InputBlock; onChange: (p: Partial<InputBlock>) => void }) => (
   <div className="space-y-3">
@@ -452,7 +557,7 @@ const InputSettings = ({ block, onChange }: { block: InputBlock; onChange: (p: P
           </Field>
         </div>
         <FieldGroup title="File sources">
-          {(['device', 'cloud_link'] as const).map((src) => (
+          {(['device', 'cloudLink'] as const).map((src) => (
             <label key={src} className="flex items-center gap-2 text-[12px] text-slate-700">
               <input
                 type="checkbox"

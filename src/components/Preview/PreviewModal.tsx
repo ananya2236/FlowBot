@@ -4,6 +4,7 @@ import { X, Send, Bot, AlertCircle, Sparkles } from 'lucide-react';
 import useStore from '@/lib/store';
 import {
   BubbleBlock,
+  BubbleAttachmentSource,
   ConditionBlock,
   GroupNodeData,
   InputBlock,
@@ -13,6 +14,7 @@ import {
   findBlockEdge,
   getInputBranchKey,
   getInputBranches,
+  getBubbleAttachmentUrl,
   getBlockSummary,
   migrateToBlocks,
   resolveTemplate,
@@ -25,14 +27,24 @@ interface Message {
   type: 'bot' | 'user' | 'system';
   contentType: 'text' | 'image' | 'video' | 'audio' | 'embed';
   content: string;
+  attachmentSource?: BubbleAttachmentSource;
+  attachmentName?: string;
 }
 
-function createMessage(type: Message['type'], contentType: Message['contentType'], content: string): Message {
+function createMessage(
+  type: Message['type'],
+  contentType: Message['contentType'],
+  content: string,
+  attachmentSource?: BubbleAttachmentSource,
+  attachmentName?: string
+): Message {
   return {
     id: Math.random().toString(36).slice(2, 11),
     type,
     contentType,
     content,
+    attachmentSource,
+    attachmentName,
   };
 }
 
@@ -109,7 +121,8 @@ export default function PreviewModal({
         const bubble = block as BubbleBlock;
         setIsTyping(true);
         await new Promise((resolve) => setTimeout(resolve, 350));
-        pushMessage(createMessage('bot', bubble.type, resolveTemplate(bubble.content, runtimeVariables)));
+        const resolvedContent = resolveTemplate(getBubbleAttachmentUrl(bubble), runtimeVariables);
+        pushMessage(createMessage('bot', bubble.type, resolvedContent, bubble.attachmentSource, bubble.attachmentName));
         setIsTyping(false);
 
         const nextEdge = findBlockEdge(safeEdges, nodeId, bubble.id);
@@ -370,10 +383,37 @@ export default function PreviewModal({
                 }`}
               >
                 {message.contentType === 'text' && <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>}
-                {message.contentType === 'image' && <MediaCard label="Image" content={message.content} />}
-                {message.contentType === 'video' && <MediaCard label="Video" content={message.content} />}
-                {message.contentType === 'audio' && <MediaCard label="Audio" content={message.content} />}
-                {message.contentType === 'embed' && <MediaCard label="Embed" content={message.content} />}
+                {message.contentType === 'image' && (
+                  <MediaCard
+                    label="Image"
+                    contentType="image"
+                    content={message.content}
+                    attachmentName={message.attachmentName}
+                  />
+                )}
+                {message.contentType === 'video' && (
+                  <MediaCard
+                    label="Video"
+                    contentType="video"
+                    content={message.content}
+                    attachmentName={message.attachmentName}
+                  />
+                )}
+                {message.contentType === 'audio' && (
+                  <MediaCard
+                    label="Audio"
+                    contentType="audio"
+                    content={message.content}
+                    attachmentName={message.attachmentName}
+                  />
+                )}
+                {message.contentType === 'embed' && (
+                  <MediaCard
+                    label="Embed"
+                    contentType="embed"
+                    content={message.content}
+                  />
+                )}
               </div>
             </div>
           ))}
@@ -446,7 +486,7 @@ export default function PreviewModal({
                   </p>
                 </>
               )}
-              {(pendingInput.fileSources || []).includes('cloud_link') && (
+              {(pendingInput.fileSources || []).includes('cloudLink') && (
                 <div className="mt-2 flex items-center gap-2">
                   <input
                     type="url"
@@ -558,9 +598,31 @@ export default function PreviewModal({
   );
 }
 
-const MediaCard = ({ label, content }: { label: string; content: string }) => (
+const MediaCard = ({
+  label,
+  contentType,
+  content,
+  attachmentName,
+}: {
+  label: string;
+  contentType: 'image' | 'video' | 'audio' | 'embed';
+  content: string;
+  attachmentName?: string;
+}) => (
   <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
     <div className="font-semibold text-slate-700">{label}</div>
-    <div className="mt-1 break-all">{content || `No ${label.toLowerCase()} source provided.`}</div>
+    {contentType === 'image' ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={content} alt={attachmentName || 'Bubble image'} className="mt-2 max-h-56 w-full rounded-md object-cover" />
+    ) : null}
+    {contentType === 'video' ? (
+      <video src={content} controls className="mt-2 max-h-56 w-full rounded-md" />
+    ) : null}
+    {contentType === 'audio' ? (
+      <audio src={content} controls className="mt-2 w-full" />
+    ) : null}
+    {contentType === 'embed' ? <div className="mt-1 break-all">{content || 'No embed source provided.'}</div> : null}
+    {contentType !== 'embed' && attachmentName ? <div className="mt-2 text-[11px]">{attachmentName}</div> : null}
+    {!content && contentType !== 'embed' ? <div className="mt-1 break-all">{`No ${label.toLowerCase()} source provided.`}</div> : null}
   </div>
 );

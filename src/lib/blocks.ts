@@ -39,6 +39,11 @@ export interface BubbleBlock extends BaseBlock {
   kind: 'bubble';
   type: BubbleBlockType;
   content: string;
+  attachmentSource?: BubbleAttachmentSource;
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentMimeType?: string;
+  driveLink?: string;
 }
 
 export interface InputValidation {
@@ -57,7 +62,8 @@ export interface InputChoice {
   value: string;
 }
 
-export type FileSource = 'device' | 'cloud_link';
+export type FileSource = 'device' | 'cloudLink';
+export type BubbleAttachmentSource = 'device' | 'drive' | 'link';
 
 export interface InputBlock extends BaseBlock {
   kind: 'input';
@@ -117,6 +123,11 @@ interface LegacyBubble {
   id?: string;
   type?: string;
   content?: string;
+  attachmentSource?: BubbleAttachmentSource;
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentMimeType?: string;
+  driveLink?: string;
 }
 
 interface LegacyInput {
@@ -138,6 +149,7 @@ interface LegacyInput {
   phoneMinDigits?: number;
   phoneMaxDigits?: number;
   fileSources?: FileSource[];
+  file_sources?: ('device' | 'cloud_link')[];
   allowMultipleFiles?: boolean;
 }
 
@@ -162,7 +174,13 @@ interface LegacyBlock {
   phoneMinDigits?: number;
   phoneMaxDigits?: number;
   fileSources?: FileSource[];
+  file_sources?: ('device' | 'cloud_link')[];
   allowMultipleFiles?: boolean;
+  attachmentSource?: BubbleAttachmentSource;
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentMimeType?: string;
+  driveLink?: string;
   value?: string;
   operator?: ConditionOperator;
   trueLabel?: string;
@@ -361,6 +379,17 @@ function createDefaultPaymentMethods(): InputChoice[] {
   ];
 }
 
+function normalizeFileSources(fileSources?: FileSource[], legacyFileSources?: ('device' | 'cloud_link')[]) {
+  if (fileSources?.length) return fileSources;
+  if (!legacyFileSources?.length) return undefined;
+  return legacyFileSources.map((source) => (source === 'cloud_link' ? 'cloudLink' : source));
+}
+
+export function getBubbleAttachmentUrl(block: BubbleBlock) {
+  if (block.type === 'text') return block.content;
+  return block.attachmentUrl || block.content || '';
+}
+
 export function createDefaultBlock(sidebarType: string): Block | null {
   if (!isSupportedSidebarType(sidebarType)) return null;
 
@@ -389,7 +418,7 @@ export function createDefaultBlock(sidebarType: string): Block | null {
       phoneCountryCode: type === 'phone' ? '+91' : undefined,
       phoneMinDigits: type === 'phone' ? 10 : undefined,
       phoneMaxDigits: type === 'phone' ? 10 : undefined,
-      fileSources: type === 'file' ? ['device', 'cloud_link'] : undefined,
+      fileSources: type === 'file' ? ['device', 'cloudLink'] : undefined,
       allowMultipleFiles: type === 'file' ? false : undefined,
     };
   }
@@ -442,6 +471,8 @@ export function createDefaultBlock(sidebarType: string): Block | null {
     kind: 'bubble',
     type: bubbleType as BubbleBlockType,
     content: defaults[bubbleType as BubbleBlockType],
+    attachmentSource: bubbleType === 'text' ? undefined : 'link',
+    attachmentUrl: bubbleType === 'text' ? undefined : defaults[bubbleType as BubbleBlockType],
   };
 }
 
@@ -459,7 +490,8 @@ export function getBlockHandleId(blockId: string, branch?: string) {
 
 export function getBlockSummary(block: Block, variables?: Record<string, string>) {
   if (block.kind === 'bubble') {
-    return resolveTemplate(block.content, variables);
+    const bubble = block as BubbleBlock;
+    return resolveTemplate(getBubbleAttachmentUrl(bubble), variables);
   }
 
   if (block.kind === 'input') {
@@ -480,11 +512,17 @@ export function getBlockSummary(block: Block, variables?: Record<string, string>
 
 function normalizeBlock(block: LegacyBlock): Block | null {
   if (block.kind === 'bubble' && isBubbleType(block.type)) {
+    const attachmentUrl = block.attachmentUrl || block.content || '';
     return {
       id: block.id || createId(),
       kind: 'bubble',
       type: block.type,
       content: block.content || '',
+      attachmentSource: block.type === 'text' ? undefined : block.attachmentSource || 'link',
+      attachmentUrl: block.type === 'text' ? undefined : attachmentUrl,
+      attachmentName: block.attachmentName,
+      attachmentMimeType: block.attachmentMimeType,
+      driveLink: block.driveLink,
     };
   }
 
@@ -511,7 +549,7 @@ function normalizeBlock(block: LegacyBlock): Block | null {
       phoneCountryCode: block.phoneCountryCode || (block.type === 'phone' ? '+91' : undefined),
       phoneMinDigits: block.phoneMinDigits || (block.type === 'phone' ? 10 : undefined),
       phoneMaxDigits: block.phoneMaxDigits || (block.type === 'phone' ? 10 : undefined),
-      fileSources: block.fileSources || (block.type === 'file' ? ['device', 'cloud_link'] : undefined),
+      fileSources: normalizeFileSources(block.fileSources, block.file_sources) || (block.type === 'file' ? ['device', 'cloudLink'] : undefined),
       allowMultipleFiles: typeof block.allowMultipleFiles === 'boolean' ? block.allowMultipleFiles : block.type === 'file' ? false : undefined,
     };
   }
