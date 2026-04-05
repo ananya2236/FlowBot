@@ -22,10 +22,18 @@ export interface Bot {
   updatedAt: number;
 }
 
+interface FlowSnapshot {
+  nodes: Node[];
+  edges: Edge[];
+}
+
 interface BotStore {
   bots: Bot[];
   activeBotId: string | null;
   editorNodeId: string | null;
+  previewNodeId: string | null;
+  historyPast: Record<string, FlowSnapshot[]>;
+  historyFuture: Record<string, FlowSnapshot[]>;
   
   // Bot management
   createBot: (name?: string) => string;
@@ -33,6 +41,7 @@ interface BotStore {
   renameBot: (id: string, name: string) => void;
   setBotStatus: (id: string, status: Bot['status']) => void;
   setActiveBot: (id: string | null) => void;
+  setPreviewNodeId: (id: string | null) => void;
   
   // Editor panel
   setEditorNodeId: (id: string | null) => void;
@@ -45,6 +54,10 @@ interface BotStore {
   updateNodeData: (nodeId: string, data: Partial<GroupNodeData>) => void;
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: (botId?: string) => boolean;
+  canRedo: (botId?: string) => boolean;
 }
 
 const initialNodes: Node[] = [
@@ -63,12 +76,26 @@ const createInitialNodes = (): Node[] =>
     data: { ...node.data },
   }));
 
+function cloneFlowSnapshot(bot: Bot): FlowSnapshot {
+  return {
+    nodes: bot.nodes.map((node) => ({
+      ...node,
+      position: { ...node.position },
+      data: node.data ? JSON.parse(JSON.stringify(node.data)) : node.data,
+    })),
+    edges: bot.edges.map((edge) => ({ ...edge })),
+  };
+}
+
 const useStore = create<BotStore>()(
   persist(
     (set, get) => ({
       bots: [],
       activeBotId: null,
       editorNodeId: null,
+      previewNodeId: null,
+      historyPast: {},
+      historyFuture: {},
 
       createBot: (name = 'My Spinabot') => {
         const id = nanoid();
@@ -107,7 +134,11 @@ const useStore = create<BotStore>()(
       },
 
       setActiveBot: (id) => {
-        set({ activeBotId: id, editorNodeId: null });
+        set({ activeBotId: id, editorNodeId: null, previewNodeId: null });
+      },
+
+      setPreviewNodeId: (id) => {
+        set({ previewNodeId: id });
       },
 
       setEditorNodeId: (id) => {
@@ -122,6 +153,11 @@ const useStore = create<BotStore>()(
 
         const updatedNodes = applyNodeChanges(changes, activeBot.nodes);
         set((state) => ({
+          historyPast: {
+            ...state.historyPast,
+            [activeBotId]: [...(state.historyPast[activeBotId] || []), cloneFlowSnapshot(activeBot)].slice(-100),
+          },
+          historyFuture: { ...state.historyFuture, [activeBotId]: [] },
           bots: state.bots.map((b) =>
             b.id === activeBotId ? { ...b, nodes: updatedNodes, updatedAt: Date.now() } : b
           ),
@@ -136,6 +172,11 @@ const useStore = create<BotStore>()(
 
         const updatedEdges = applyEdgeChanges(changes, activeBot.edges);
         set((state) => ({
+          historyPast: {
+            ...state.historyPast,
+            [activeBotId]: [...(state.historyPast[activeBotId] || []), cloneFlowSnapshot(activeBot)].slice(-100),
+          },
+          historyFuture: { ...state.historyFuture, [activeBotId]: [] },
           bots: state.bots.map((b) =>
             b.id === activeBotId ? { ...b, edges: updatedEdges, updatedAt: Date.now() } : b
           ),
@@ -151,6 +192,11 @@ const useStore = create<BotStore>()(
 
         const updatedEdges = sanitizeFlowEdges(addEdge(connection, activeBot.edges), activeBot.nodes);
         set((state) => ({
+          historyPast: {
+            ...state.historyPast,
+            [activeBotId]: [...(state.historyPast[activeBotId] || []), cloneFlowSnapshot(activeBot)].slice(-100),
+          },
+          historyFuture: { ...state.historyFuture, [activeBotId]: [] },
           bots: state.bots.map((b) =>
             b.id === activeBotId ? { ...b, edges: updatedEdges, updatedAt: Date.now() } : b
           ),
@@ -170,6 +216,11 @@ const useStore = create<BotStore>()(
           data: { ...data },
         };
         set((state) => ({
+          historyPast: {
+            ...state.historyPast,
+            [activeBotId]: [...(state.historyPast[activeBotId] || []), cloneFlowSnapshot(activeBot)].slice(-100),
+          },
+          historyFuture: { ...state.historyFuture, [activeBotId]: [] },
           bots: state.bots.map((b) =>
             b.id === activeBotId
               ? { ...b, nodes: [...b.nodes, newNode], updatedAt: Date.now() }
@@ -195,6 +246,11 @@ const useStore = create<BotStore>()(
         });
 
         set((state) => ({
+          historyPast: {
+            ...state.historyPast,
+            [activeBotId]: [...(state.historyPast[activeBotId] || []), cloneFlowSnapshot(activeBot)].slice(-100),
+          },
+          historyFuture: { ...state.historyFuture, [activeBotId]: [] },
           bots: state.bots.map((b) =>
             b.id === activeBotId ? { ...b, nodes: updatedNodes, updatedAt: Date.now() } : b
           ),
@@ -204,21 +260,105 @@ const useStore = create<BotStore>()(
       setNodes: (nodes) => {
         const { activeBotId } = get();
         if (!activeBotId) return;
-        set((state) => ({
-          bots: state.bots.map((b) =>
-            b.id === activeBotId ? { ...b, nodes, updatedAt: Date.now() } : b
-          ),
-        }));
+        set((state) => {
+          const activeBot = state.bots.find((b) => b.id === activeBotId);
+          if (!activeBot) return state;
+          return {
+            ...state,
+            historyPast: {
+              ...state.historyPast,
+              [activeBotId]: [...(state.historyPast[activeBotId] || []), cloneFlowSnapshot(activeBot)].slice(-100),
+            },
+            historyFuture: { ...state.historyFuture, [activeBotId]: [] },
+            bots: state.bots.map((b) =>
+              b.id === activeBotId ? { ...b, nodes, updatedAt: Date.now() } : b
+            ),
+          };
+        });
       },
 
       setEdges: (edges) => {
         const { activeBotId } = get();
         if (!activeBotId) return;
-        set((state) => ({
-          bots: state.bots.map((b) =>
-            b.id === activeBotId ? { ...b, edges, updatedAt: Date.now() } : b
-          ),
-        }));
+        set((state) => {
+          const activeBot = state.bots.find((b) => b.id === activeBotId);
+          if (!activeBot) return state;
+          return {
+            ...state,
+            historyPast: {
+              ...state.historyPast,
+              [activeBotId]: [...(state.historyPast[activeBotId] || []), cloneFlowSnapshot(activeBot)].slice(-100),
+            },
+            historyFuture: { ...state.historyFuture, [activeBotId]: [] },
+            bots: state.bots.map((b) =>
+              b.id === activeBotId ? { ...b, edges, updatedAt: Date.now() } : b
+            ),
+          };
+        });
+      },
+
+      undo: () => {
+        const { activeBotId } = get();
+        if (!activeBotId) return;
+        set((state) => {
+          const activeBot = state.bots.find((b) => b.id === activeBotId);
+          const past = state.historyPast[activeBotId] || [];
+          if (!activeBot || past.length === 0) return state;
+
+          const previous = past[past.length - 1];
+          const nextPast = past.slice(0, -1);
+          const nextFuture = [cloneFlowSnapshot(activeBot), ...(state.historyFuture[activeBotId] || [])].slice(0, 100);
+
+          return {
+            ...state,
+            historyPast: { ...state.historyPast, [activeBotId]: nextPast },
+            historyFuture: { ...state.historyFuture, [activeBotId]: nextFuture },
+            bots: state.bots.map((b) =>
+              b.id === activeBotId
+                ? { ...b, nodes: previous.nodes, edges: previous.edges, updatedAt: Date.now() }
+                : b
+            ),
+          };
+        });
+      },
+
+      redo: () => {
+        const { activeBotId } = get();
+        if (!activeBotId) return;
+        set((state) => {
+          const activeBot = state.bots.find((b) => b.id === activeBotId);
+          const future = state.historyFuture[activeBotId] || [];
+          if (!activeBot || future.length === 0) return state;
+
+          const next = future[0];
+          const nextFuture = future.slice(1);
+          const nextPast = [...(state.historyPast[activeBotId] || []), cloneFlowSnapshot(activeBot)].slice(-100);
+
+          return {
+            ...state,
+            historyPast: { ...state.historyPast, [activeBotId]: nextPast },
+            historyFuture: { ...state.historyFuture, [activeBotId]: nextFuture },
+            bots: state.bots.map((b) =>
+              b.id === activeBotId
+                ? { ...b, nodes: next.nodes, edges: next.edges, updatedAt: Date.now() }
+                : b
+            ),
+          };
+        });
+      },
+
+      canUndo: (botId) => {
+        const state = get();
+        const currentBotId = botId || state.activeBotId;
+        if (!currentBotId) return false;
+        return (state.historyPast[currentBotId] || []).length > 0;
+      },
+
+      canRedo: (botId) => {
+        const state = get();
+        const currentBotId = botId || state.activeBotId;
+        if (!currentBotId) return false;
+        return (state.historyFuture[currentBotId] || []).length > 0;
       },
     }),
     {

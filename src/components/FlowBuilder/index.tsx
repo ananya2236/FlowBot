@@ -7,13 +7,17 @@ import ReactFlow, {
   useReactFlow,
   ConnectionMode,
   BackgroundVariant,
+  ConnectionLineType,
+  MarkerType,
+  Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { nanoid } from 'nanoid';
 import GroupNode from './GroupNode';
 import StartNode from './StartNode';
 import CanvasToolbar from './CanvasToolbar';
 import useStore from '@/lib/store';
-import { createDefaultBlock, createGroupData, sanitizeFlowEdges } from '@/lib/blocks';
+import { createDefaultBlock, createGroupData, migrateToBlocks, sanitizeFlowEdges, type GroupNodeData } from '@/lib/blocks';
 
 const nodeTypes = {
   group: GroupNode,
@@ -24,9 +28,33 @@ const proOptions = { hideAttribution: true };
 const emptyNodes: never[] = [];
 const emptyEdges: never[] = [];
 
+interface CopiedGroupTemplate {
+  position: { x: number; y: number };
+  data: GroupNodeData;
+}
+
+function cloneGroupDataWithFreshIds(sourceData: unknown): GroupNodeData {
+  const raw = (sourceData || {}) as Partial<GroupNodeData>;
+  const sourceBlocks = migrateToBlocks(raw);
+  const idMap: Record<string, string> = {};
+  const blocks = sourceBlocks.map((block) => {
+    const nextId = nanoid();
+    idMap[block.id] = nextId;
+    return { ...block, id: nextId };
+  });
+
+  return {
+    title: raw.title || 'Group',
+    blocks,
+    activeBlockId: raw.activeBlockId ? idMap[raw.activeBlockId] || blocks[0]?.id || null : blocks[0]?.id || null,
+  };
+}
+
 const FlowBuilderInner = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
+  const copiedGroupsRef = useRef<CopiedGroupTemplate[]>([]);
+  const pasteCountRef = useRef(0);
   
   const { 
     activeBotId, 
@@ -66,10 +94,31 @@ const FlowBuilderInner = () => {
   );
 
   const activeBot = bots.find(b => b.id === activeBotId);
+  const selectedGroups = useMemo(
+    () => (activeBot?.nodes || []).filter((node) => node.selected && node.type === 'group'),
+    [activeBot]
+  );
   const safeEdges = useMemo(() => {
     if (!activeBot) return [];
     return sanitizeFlowEdges(activeBot.edges, activeBot.nodes);
   }, [activeBot]);
+
+  const renderedEdges = useMemo(() => {
+    return safeEdges.map((edge) => ({
+      ...edge,
+      type: 'step',
+      animated: false,
+      style: { ...(edge.style || {}), stroke: '#ff6a00', strokeWidth: 1.9 },
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left,
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: '#ff6a00',
+        width: 20,
+        height: 20,
+      },
+    }));
+  }, [safeEdges]);
 
   useEffect(() => {
     if (!activeBot) return;
@@ -78,18 +127,75 @@ const FlowBuilderInner = () => {
   }, [activeBot, safeEdges, setEdges]);
 
   const defaultEdgeOptions = useMemo(() => ({
-    type: 'default',
+    type: 'step',
     animated: false,
-    style: { stroke: '#d4d4d8', strokeWidth: 2 },
+    style: { stroke: '#ff6a00', strokeWidth: 1.9 },
+    sourcePosition: Position.Right,
+    targetPosition: Position.Left,
+    markerEnd: {
+      type: MarkerType.ArrowClosed,
+      color: '#ff6a00',
+      width: 20,
+      height: 20,
+    },
   }), []);
 
   const snapGrid: [number, number] = useMemo(() => [12, 12], []);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const isCopy = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c';
+      const isPaste = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v';
+      if (!isCopy && !isPaste) return;
+
+      const target = event.target as HTMLElement | null;
+      const tagName = target?.tagName?.toLowerCase();
+      const isTypingTarget =
+        !!target &&
+        (target.isContentEditable || tagName === 'input' || tagName === 'textarea' || tagName === 'select');
+      if (isTypingTarget) return;
+
+      if (isCopy) {
+        if (!selectedGroups.length) return;
+        copiedGroupsRef.current = selectedGroups.map((node) => ({
+          position: { x: node.position.x, y: node.position.y },
+          data: cloneGroupDataWithFreshIds(node.data),
+        }));
+        pasteCountRef.current = 0;
+        event.preventDefault();
+        return;
+      }
+
+      if (!copiedGroupsRef.current.length) return;
+      pasteCountRef.current += 1;
+      const baseOffset = 56 * pasteCountRef.current;
+      copiedGroupsRef.current.forEach((template, index) => {
+        const perNodeOffset = index * 26;
+        const data = cloneGroupDataWithFreshIds(template.data);
+        addNode(
+          'group',
+          {
+            x: template.position.x + baseOffset + perNodeOffset,
+            y: template.position.y + baseOffset + perNodeOffset,
+          },
+          {
+            ...data,
+            title: `${data.title} Copy`,
+          }
+        );
+      });
+      event.preventDefault();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [addNode, selectedGroups]);
 
   return (
     <div className="w-full h-full min-h-0 relative" ref={reactFlowWrapper}>
       <ReactFlow
         nodes={activeBot?.nodes || emptyNodes}
-        edges={safeEdges || emptyEdges}
+        edges={renderedEdges || emptyEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
@@ -97,6 +203,7 @@ const FlowBuilderInner = () => {
         onDragOver={onDragOver}
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
+        connectionLineType={ConnectionLineType.Step}
         fitView
         snapToGrid
         snapGrid={snapGrid}

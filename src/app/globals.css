@@ -17,7 +17,7 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    zoom: 0.8;
+    zoom: 1;
   }
 
   body {
@@ -75,10 +75,17 @@
     border-color: #d1d5db;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   }
-  .typebot-group.selected {
-    border: 2px dashed var(--color-accent);
-    box-shadow: none;
-  }
+.typebot-group.selected {
+  border: 2px dashed var(--color-accent);
+  box-shadow: none;
+}
+
+.typebot-group.preview-active,
+.typebot-start.preview-active {
+  border-color: #fb923c !important;
+  box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.25), 0 12px 26px rgba(251, 146, 60, 0.2) !important;
+  transform: translateY(-1px);
+}
 
   .typebot-group-header {
     padding: 10px 14px 6px;
@@ -136,8 +143,24 @@
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  z-index: 10 !important;
+  z-index: 40 !important;
   cursor: grab !important;
+}
+
+.react-flow__nodes {
+  z-index: 40 !important;
+}
+
+.react-flow__edges {
+  z-index: 10 !important;
+}
+
+.react-flow__edge {
+  z-index: 10 !important;
+}
+
+.react-flow__connection {
+  z-index: 12 !important;
 }
 
 .react-flow__node.dragging {
@@ -157,6 +180,13 @@
 
 .react-flow__renderer {
   background-color: #FFFFFF !important;
+}
+
+.react-flow__pane {
+  background:
+    radial-gradient(circle at 15% 20%, rgba(251, 146, 60, 0.06) 0%, transparent 32%),
+    radial-gradient(circle at 85% 70%, rgba(59, 130, 246, 0.06) 0%, transparent 36%),
+    #ffffff;
 }
 
 /* Hide React Flow attribution / branding */
@@ -186,21 +216,24 @@
 
 /* Typebot-style bezier edges */
 .react-flow__edge-path {
-  stroke: #d4d4d8 !important;
-  stroke-width: 2 !important;
+  stroke: #FF6A00 !important;
+  stroke-width: 1.9 !important;
   fill: none !important;
+  stroke-linecap: round !important;
+  filter: drop-shadow(0 0 2px rgba(255, 106, 0, 0.18)) !important;
 }
 
 .react-flow__edge.selected .react-flow__edge-path {
-  stroke: var(--color-accent) !important;
-  stroke-width: 2.5 !important;
+  stroke: #ff7e29 !important;
+  stroke-width: 2.3 !important;
 }
 
 /* Connection line while dragging */
 .react-flow__connection-path {
   stroke: #FF6A00 !important;
-  stroke-width: 2 !important;
-  stroke-dasharray: 5 5 !important;
+  stroke-width: 1.9 !important;
+  stroke-dasharray: 6 5 !important;
+  filter: drop-shadow(0 0 2px rgba(255, 106, 0, 0.18)) !important;
 }
 
 /* Canvas Toolbar (typebot-style) */
@@ -318,6 +351,7 @@
   from { opacity: 0; max-height: 0; }
   to { opacity: 1; max-height: 2000px; }
 }
+
 .section-content-enter {
   animation: section-expand 0.2s ease-out forwards;
   overflow: hidden;

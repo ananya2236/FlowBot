@@ -120,7 +120,7 @@ export default function EditorSidebar() {
   };
 
   return (
-    <aside className="w-[300px] bg-white border-r border-gray-200 flex flex-col h-full select-none">
+    <aside className="w-[300px] min-h-0 h-full bg-white border-r border-gray-200 flex flex-col select-none">
       {/* Search + Lock */}
       <div className="px-4 pt-4 pb-2 flex items-center gap-2">
         <div className="relative flex-1">
@@ -138,7 +138,7 @@ export default function EditorSidebar() {
       </div>
 
       {/* Sections */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
         {SECTIONS.map((section) => {
           const filtered = section.items.filter((item) =>
             item.label.toLowerCase().includes(search.toLowerCase())

@@ -13,7 +13,25 @@ export type InputBlockType =
   | 'rating'
   | 'file'
   | 'cards';
-export type LogicBlockType = 'set_variable' | 'condition' | 'redirect';
+export type LogicBlockType =
+  | 'set_variable'
+  | 'condition'
+  | 'redirect'
+  | 'script'
+  | 'typebot'
+  | 'wait'
+  | 'ab_test'
+  | 'webhook'
+  | 'jump'
+  | 'return'
+  | 'start'
+  | 'command'
+  | 'reply'
+  | 'invalid'
+  | 'sheets'
+  | 'analytics'
+  | 'http_request'
+  | 'send_email';
 export type ConditionOperator =
   | 'equals'
   | 'not_equals'
@@ -27,7 +45,9 @@ export type SupportedSidebarType =
   | 'bubble'
   | BubbleBlockType
   | `input_${InputBlockType}`
-  | `logic_${LogicBlockType}`;
+  | `logic_${LogicBlockType}`
+  | `event_${'start' | 'command' | 'reply' | 'invalid'}`
+  | `integration_${'sheets' | 'analytics' | 'webhook' | 'email'}`;
 
 export interface BaseBlock {
   id: string;
@@ -104,13 +124,13 @@ export interface ConditionBlock extends BaseBlock {
   falseLabel: string;
 }
 
-export interface RedirectBlock extends BaseBlock {
+export interface ActionLogicBlock extends BaseBlock {
   kind: 'logic';
-  type: 'redirect';
+  type: Exclude<LogicBlockType, 'set_variable' | 'condition'>;
   label: string;
 }
 
-export type LogicBlock = SetVariableBlock | ConditionBlock | RedirectBlock;
+export type LogicBlock = SetVariableBlock | ConditionBlock | ActionLogicBlock;
 export type Block = BubbleBlock | InputBlock | LogicBlock;
 
 export interface GroupNodeData {
@@ -225,6 +245,21 @@ const SUPPORTED_TYPES: SupportedSidebarType[] = [
   'logic_set_variable',
   'logic_condition',
   'logic_redirect',
+  'logic_script',
+  'logic_typebot',
+  'logic_wait',
+  'logic_ab_test',
+  'logic_webhook',
+  'logic_jump',
+  'logic_return',
+  'event_start',
+  'event_command',
+  'event_reply',
+  'event_invalid',
+  'integration_sheets',
+  'integration_analytics',
+  'integration_webhook',
+  'integration_email',
 ];
 
 const BLOCK_LABELS: Record<string, string> = {
@@ -249,6 +284,21 @@ const BLOCK_LABELS: Record<string, string> = {
   logic_set_variable: 'Set variable',
   logic_condition: 'Condition',
   logic_redirect: 'Redirect',
+  logic_script: 'Script',
+  logic_typebot: 'Typebot',
+  logic_wait: 'Wait',
+  logic_ab_test: 'AB test',
+  logic_webhook: 'Webhook',
+  logic_jump: 'Jump',
+  logic_return: 'Return',
+  logic_start: 'Start event',
+  logic_command: 'Command event',
+  logic_reply: 'Reply event',
+  logic_invalid: 'Invalid event',
+  logic_sheets: 'Google Sheets',
+  logic_analytics: 'Analytics',
+  logic_http_request: 'HTTP request',
+  logic_send_email: 'Send email',
 };
 
 const BUBBLE_TYPES: BubbleBlockType[] = ['text', 'image', 'video', 'audio', 'embed'];
@@ -267,7 +317,26 @@ const INPUT_TYPES: InputBlockType[] = [
   'file',
   'cards',
 ];
-const LOGIC_TYPES: LogicBlockType[] = ['set_variable', 'condition', 'redirect'];
+const LOGIC_TYPES: LogicBlockType[] = [
+  'set_variable',
+  'condition',
+  'redirect',
+  'script',
+  'typebot',
+  'wait',
+  'ab_test',
+  'webhook',
+  'jump',
+  'return',
+  'start',
+  'command',
+  'reply',
+  'invalid',
+  'sheets',
+  'analytics',
+  'http_request',
+  'send_email',
+];
 
 function createId() {
   return Math.random().toString(36).slice(2, 11);
@@ -290,9 +359,9 @@ export function isSupportedSidebarType(value: string): value is SupportedSidebar
 }
 
 export function getBlockLabel(block: Block) {
-  if (block.kind === 'bubble') return BLOCK_LABELS[block.type];
-  if (block.kind === 'input') return BLOCK_LABELS[`input_${block.type}`];
-  return BLOCK_LABELS[`logic_${block.type}`];
+  if (block.kind === 'bubble') return BLOCK_LABELS[block.type] || block.type;
+  if (block.kind === 'input') return BLOCK_LABELS[`input_${block.type}`] || block.type;
+  return BLOCK_LABELS[`logic_${block.type}`] || block.type;
 }
 
 function isBubbleType(value?: string): value is BubbleBlockType {
@@ -379,6 +448,25 @@ function createDefaultPaymentMethods(): InputChoice[] {
   ];
 }
 
+const ACTION_DEFAULT_LABELS: Record<Exclude<LogicBlockType, 'set_variable' | 'condition'>, string> = {
+  redirect: 'Redirect to another group',
+  script: 'Run custom script',
+  typebot: 'Hand off to typebot flow',
+  wait: 'Wait before next step',
+  ab_test: 'A/B test split',
+  webhook: 'Trigger webhook',
+  jump: 'Jump to another branch',
+  return: 'Return to previous branch',
+  start: 'Event: start flow',
+  command: 'Event: command received',
+  reply: 'Event: reply received',
+  invalid: 'Event: invalid input',
+  sheets: 'Log data to Google Sheets',
+  analytics: 'Track event in analytics',
+  http_request: 'Send HTTP request',
+  send_email: 'Send email notification',
+};
+
 function normalizeFileSources(fileSources?: FileSource[], legacyFileSources?: ('device' | 'cloud_link')[]) {
   if (fileSources?.length) return fileSources;
   if (!legacyFileSources?.length) return undefined;
@@ -423,6 +511,40 @@ export function createDefaultBlock(sidebarType: string): Block | null {
     };
   }
 
+  if (sidebarType.startsWith('event_')) {
+    const eventTypeMap = {
+      event_start: 'start',
+      event_command: 'command',
+      event_reply: 'reply',
+      event_invalid: 'invalid',
+    } as const;
+
+    const mappedType = eventTypeMap[sidebarType as keyof typeof eventTypeMap];
+    return {
+      id,
+      kind: 'logic',
+      type: mappedType,
+      label: ACTION_DEFAULT_LABELS[mappedType],
+    };
+  }
+
+  if (sidebarType.startsWith('integration_')) {
+    const integrationTypeMap = {
+      integration_sheets: 'sheets',
+      integration_analytics: 'analytics',
+      integration_webhook: 'http_request',
+      integration_email: 'send_email',
+    } as const;
+
+    const mappedType = integrationTypeMap[sidebarType as keyof typeof integrationTypeMap];
+    return {
+      id,
+      kind: 'logic',
+      type: mappedType,
+      label: ACTION_DEFAULT_LABELS[mappedType],
+    };
+  }
+
   if (sidebarType.startsWith('logic_')) {
     const type = sidebarType.replace('logic_', '') as LogicBlockType;
 
@@ -453,7 +575,7 @@ export function createDefaultBlock(sidebarType: string): Block | null {
       id,
       kind: 'logic',
       type,
-      label: 'Redirect to another group',
+      label: ACTION_DEFAULT_LABELS[type as Exclude<LogicBlockType, 'set_variable' | 'condition'>],
     };
   }
 
@@ -581,8 +703,8 @@ function normalizeBlock(block: LegacyBlock): Block | null {
     return {
       id: block.id || createId(),
       kind: 'logic',
-      type: 'redirect',
-      label: block.label || 'Redirect to another group',
+      type: block.type,
+      label: block.label || ACTION_DEFAULT_LABELS[block.type as Exclude<LogicBlockType, 'set_variable' | 'condition'>],
     };
   }
 

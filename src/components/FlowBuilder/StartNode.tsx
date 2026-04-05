@@ -2,11 +2,15 @@
 import React from 'react';
 import { Handle, Position } from 'reactflow';
 import { Flag } from 'lucide-react';
+import useStore from '@/lib/store';
 
-const StartNode = ({ selected }: { selected: boolean }) => {
+const StartNode = ({ id, selected }: { id: string; selected: boolean }) => {
+  const { previewNodeId } = useStore();
+  const isPreviewActive = previewNodeId === id;
+
   return (
     <div
-      className={`typebot-start ${selected ? 'selected' : ''}`}
+      className={`typebot-start ${selected ? 'selected' : ''} ${isPreviewActive ? 'preview-active' : ''}`}
       role="button"
       aria-label="Start node"
       tabIndex={0}

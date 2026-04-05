@@ -14,7 +14,7 @@ interface EditorNavbarProps {
 
 export default function EditorNavbar({ botId, activeTab, setActiveTab, onTestClick }: EditorNavbarProps) {
   const router = useRouter();
-  const { bots, renameBot, setBotStatus } = useStore();
+  const { bots, renameBot, setBotStatus, undo, redo, canUndo, canRedo } = useStore();
   const bot = bots.find((b) => b.id === botId);
   const [isPublishOpen, setIsPublishOpen] = React.useState(false);
   const [scriptEndpoint, setScriptEndpoint] = React.useState('');
@@ -25,6 +25,8 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab, onTestCli
   if (!bot) return null;
 
   const tabs = ['Flow', 'Theme', 'Settings', 'Share'];
+  const disableUndo = !canUndo(botId);
+  const disableRedo = !canRedo(botId);
 
   const generatePayload = () => {
     const endpoint = scriptEndpoint.trim();
@@ -84,10 +86,18 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab, onTestCli
             />
           </div>
           <div className="flex items-center gap-0.5 ml-2">
-            <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors">
+            <button
+              onClick={undo}
+              disabled={disableUndo}
+              className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               <Undo2 size={15} />
             </button>
-            <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors">
+            <button
+              onClick={redo}
+              disabled={disableRedo}
+              className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               <Redo2 size={15} />
             </button>
           </div>
@@ -116,7 +126,10 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab, onTestCli
 
         {/* Right section */}
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+          <button
+            onClick={() => setActiveTab('Share')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
             <Share2 size={14} />
             Share
           </button>

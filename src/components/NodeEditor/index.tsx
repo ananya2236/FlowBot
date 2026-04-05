@@ -10,6 +10,8 @@ import {
   ArrowRight,
   Code2,
   ChevronDown,
+  ChevronUp,
+  ChevronRight,
   AlertTriangle,
   GripVertical,
   Info,
@@ -26,7 +28,7 @@ import {
   InputChoice,
   FileSource,
   LogicBlock,
-  RedirectBlock,
+  ActionLogicBlock,
   SetVariableBlock,
   formatVariableName,
   getBlockLabel,
@@ -75,6 +77,8 @@ export default function NodeEditor() {
   const nodes = activeBot?.nodes || [];
   const selectedNode = editorNodeId ? nodes.find((node) => node.id === editorNodeId) || null : null;
   const isOpen = !!selectedNode;
+  const [draggingBlockId, setDraggingBlockId] = useState<string | null>(null);
+  const [dropBlockId, setDropBlockId] = useState<string | null>(null);
 
   const close = useCallback(() => setEditorNodeId(null), [setEditorNodeId]);
 
@@ -113,6 +117,32 @@ export default function NodeEditor() {
     if (!details) return;
     const next = details.blocks.filter((b) => b.id !== blockId);
     patchGroup({ blocks: next, activeBlockId: next[0]?.id || null });
+  };
+
+  const moveBlock = (blockId: string, direction: 'up' | 'down') => {
+    if (!details) return;
+    const sourceIndex = details.blocks.findIndex((block) => block.id === blockId);
+    if (sourceIndex < 0) return;
+
+    const targetIndex = direction === 'up' ? sourceIndex - 1 : sourceIndex + 1;
+    if (targetIndex < 0 || targetIndex >= details.blocks.length) return;
+
+    const nextBlocks = [...details.blocks];
+    const [moved] = nextBlocks.splice(sourceIndex, 1);
+    nextBlocks.splice(targetIndex, 0, moved);
+    patchGroup({ blocks: nextBlocks, activeBlockId: blockId });
+  };
+
+  const reorderBlocks = (sourceBlockId: string, targetBlockId: string) => {
+    if (!details || sourceBlockId === targetBlockId) return;
+    const sourceIndex = details.blocks.findIndex((block) => block.id === sourceBlockId);
+    const targetIndex = details.blocks.findIndex((block) => block.id === targetBlockId);
+    if (sourceIndex < 0 || targetIndex < 0) return;
+
+    const nextBlocks = [...details.blocks];
+    const [moved] = nextBlocks.splice(sourceIndex, 1);
+    nextBlocks.splice(targetIndex, 0, moved);
+    patchGroup({ blocks: nextBlocks, activeBlockId: sourceBlockId });
   };
 
   if (!isOpen) return null;
@@ -206,13 +236,44 @@ export default function NodeEditor() {
                       <button
                         key={block.id}
                         onClick={() => patchGroup({ activeBlockId: block.id })}
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          event.dataTransfer.dropEffect = 'move';
+                          setDropBlockId(block.id);
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          const sourceBlockId = event.dataTransfer.getData('application/block-id');
+                          if (sourceBlockId) reorderBlocks(sourceBlockId, block.id);
+                          setDraggingBlockId(null);
+                          setDropBlockId(null);
+                        }}
+                        onDragLeave={() => setDropBlockId((current) => (current === block.id ? null : current))}
                         className={`w-full group/item flex items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all ${
                           isActive
                             ? 'bg-orange-50/80 ring-1 ring-orange-200'
-                            : 'hover:bg-slate-50'
+                            : dropBlockId === block.id
+                              ? 'bg-orange-50/60 ring-1 ring-orange-200'
+                              : 'hover:bg-slate-50'
                         }`}
                       >
-                        <span className="text-slate-300 group-hover/item:text-slate-400 transition-colors">
+                        <span
+                          draggable
+                          onDragStart={(event) => {
+                            event.stopPropagation();
+                            event.dataTransfer.setData('application/block-id', block.id);
+                            event.dataTransfer.effectAllowed = 'move';
+                            setDraggingBlockId(block.id);
+                          }}
+                          onDragEnd={() => {
+                            setDraggingBlockId(null);
+                            setDropBlockId(null);
+                          }}
+                          className={`text-slate-300 group-hover/item:text-slate-400 transition-colors cursor-grab active:cursor-grabbing ${
+                            draggingBlockId === block.id ? 'opacity-40' : ''
+                          }`}
+                          title="Drag to reorder"
+                        >
                           <GripVertical size={12} />
                         </span>
                         <div className={`flex h-6 w-6 items-center justify-center rounded-md shrink-0 ${style.bg} ${style.text}`}>
@@ -266,13 +327,31 @@ export default function NodeEditor() {
         {selectedNode && selectedNode.id !== 'start' && (
           <div className="border-t border-slate-100 px-4 py-2.5 shrink-0 flex items-center justify-between gap-2">
             {details?.activeBlock && (
-              <button
-                onClick={() => deleteBlock(details.activeBlock!.id)}
-                className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-              >
-                <Trash2 size={12} />
-                Remove block
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => moveBlock(details.activeBlock!.id, 'up')}
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                  title="Move block up"
+                >
+                  <ChevronUp size={12} />
+                  Up
+                </button>
+                <button
+                  onClick={() => moveBlock(details.activeBlock!.id, 'down')}
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                  title="Move block down"
+                >
+                  <ChevronRight size={12} className="rotate-90" />
+                  Down
+                </button>
+                <button
+                  onClick={() => deleteBlock(details.activeBlock!.id)}
+                  className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 size={12} />
+                  Remove block
+                </button>
+              </div>
             )}
             <button
               onClick={deleteNode}
@@ -691,11 +770,11 @@ const LogicSettings = ({ block, onChange }: { block: LogicBlock; onChange: (p: P
     );
   }
 
-  const r = block as RedirectBlock;
+  const r = block as ActionLogicBlock;
   return (
     <div className="space-y-3">
       <Field label="Label"><input value={r.label} onChange={(e) => onChange({ label: e.target.value })} className={inputClass} placeholder="Go to group" /></Field>
-      <Hint>Connect to another group. Preview will follow that edge.</Hint>
+      <Hint>Connect this step to another group. Preview will follow the connected path.</Hint>
     </div>
   );
 };

@@ -7,14 +7,16 @@ import EditorSidebar from '@/components/Sidebar/EditorSidebar';
 import FlowBuilder from '@/components/FlowBuilder';
 import NodeEditor from '@/components/NodeEditor';
 import PreviewModal from '@/components/Preview/PreviewModal';
-import { Settings as SettingsIcon, Layout, Bot } from 'lucide-react';
+import { Settings as SettingsIcon, Layout, Bot, Share2, Copy, Check, Palette, ShieldCheck } from 'lucide-react';
 
 export default function BotEditorPage() {
   const { id } = useParams();
-  const { setActiveBot, bots } = useStore();
+  const { setActiveBot, bots, renameBot, setBotStatus } = useStore();
   const botId = Array.isArray(id) ? id[0] : id;
   const [activeTab, setActiveTab] = useState('Flow');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState('Modern Orange');
+  const [copied, setCopied] = useState(false);
   useEffect(() => {
     setActiveBot(botId ?? null);
     return () => setActiveBot(null);
@@ -48,10 +50,11 @@ export default function BotEditorPage() {
         return (
           <div className="flex flex-1 min-h-0 relative overflow-hidden bg-white">
             <EditorSidebar />
-            <main className="flex-1 h-full min-h-0 relative overflow-hidden">
+            <main className={`flex-1 h-full min-h-0 relative overflow-hidden transition-all duration-300 ${isPreviewOpen ? 'pr-[430px]' : ''}`}>
               <FlowBuilder />
             </main>
             <NodeEditor />
+            <PreviewModal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} botId={botId || ''} />
           </div>
         );
       case 'Theme':
@@ -71,18 +74,116 @@ export default function BotEditorPage() {
                     </h3>
                     <div className="grid grid-cols-2 gap-4">
                       {['Minimal Light', 'Clean Business', 'Modern Orange', 'Technical Slate'].map((t) => (
-                        <div key={t} className="aspect-video bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 hover:border-orange-500 transition-all cursor-pointer group relative overflow-hidden">
+                        <button
+                          key={t}
+                          onClick={() => setSelectedTheme(t)}
+                          className={`aspect-video bg-slate-50 border-2 rounded-2xl p-4 hover:border-orange-500 transition-all cursor-pointer group relative overflow-hidden text-left ${
+                            selectedTheme === t ? 'border-orange-500 shadow-lg shadow-orange-200/50' : 'border-slate-100'
+                          }`}
+                        >
                           <div className="h-full flex flex-col justify-between relative z-10">
                             <div className="w-8 h-1.5 bg-slate-200 rounded-full" />
                             <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-black transition-colors">{t}</span>
                           </div>
-                        </div>
+                        </button>
                       ))}
+                    </div>
+                    <div className="mt-4 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-xs text-orange-700 font-medium flex items-center gap-2">
+                      <Palette size={14} />
+                      Active theme: {selectedTheme}
                     </div>
                   </div>
                 </section>
               </div>
+            </div>
+          </div>
+        );
+      case 'Settings':
+        return (
+          <div className="flex-1 overflow-y-auto p-12 bg-white dotted-bg">
+            <div className="max-w-3xl mx-auto space-y-6">
+              <header className="mb-6">
+                <h2 className="text-4xl font-bold mb-2 tracking-tight text-black">Bot Settings</h2>
+                <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Configure bot identity and release mode</p>
+              </header>
+
+              <section className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
+                <label className="block">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Bot name</span>
+                  <input
+                    value={bot.name}
+                    onChange={(event) => renameBot(bot.id, event.target.value)}
+                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
+                  />
+                </label>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setBotStatus(bot.id, 'Draft')}
+                    className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${
+                      bot.status === 'Draft' ? 'border-orange-400 bg-orange-50 text-orange-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    Set Draft
+                  </button>
+                  <button
+                    onClick={() => setBotStatus(bot.id, 'Live')}
+                    className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors ${
+                      bot.status === 'Live' ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    Set Live
+                  </button>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 flex items-center gap-2">
+                  <ShieldCheck size={14} className="text-slate-500" />
+                  Current status: <span className="font-bold">{bot.status}</span>
+                </div>
+              </section>
+            </div>
+          </div>
+        );
+      case 'Share':
+        return (
+          <div className="flex-1 overflow-y-auto p-12 bg-white dotted-bg">
+            <div className="max-w-3xl mx-auto space-y-6">
+              <header className="mb-6">
+                <h2 className="text-4xl font-bold mb-2 tracking-tight text-black">Share</h2>
+                <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Share editor access and collaboration links</p>
+              </header>
+
+              <section className="rounded-2xl border border-slate-200 bg-white p-6">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Editor link</div>
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 truncate">
+                    {typeof window === 'undefined' ? '' : `${window.location.origin}/bot/${bot.id}/edit`}
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const link = `${window.location.origin}/bot/${bot.id}/edit`;
+                      await navigator.clipboard.writeText(link);
+                      setCopied(true);
+                      window.setTimeout(() => setCopied(false), 1500);
+                    }}
+                    className="rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      {copied ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                      {copied ? 'Copied' : 'Copy'}
+                    </span>
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setActiveTab('Flow')}
+                  className="mt-4 rounded-xl bg-orange-500 px-4 py-2.5 text-xs font-semibold text-white hover:bg-orange-600 inline-flex items-center gap-1.5"
+                >
+                  <Share2 size={13} />
+                  Return To Flow
+                </button>
+              </section>
             </div>
           </div>
         );
@@ -110,7 +211,6 @@ export default function BotEditorPage() {
         onTestClick={() => setIsPreviewOpen(true)}
       />
       {renderContent()}
-      <PreviewModal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)} botId={botId || ''} />
     </div>
   );
 }

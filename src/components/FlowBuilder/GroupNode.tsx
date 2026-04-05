@@ -31,6 +31,18 @@ import {
   Code2,
   ArrowRight,
   Settings2,
+  Timer,
+  Shuffle,
+  CornerDownRight,
+  CornerUpLeft,
+  Flag,
+  Command,
+  Reply,
+  XCircle,
+  Sheet,
+  BarChart3,
+  Zap,
+  Send,
 } from 'lucide-react';
 import {
   Block,
@@ -74,6 +86,21 @@ const BLOCK_TYPES: Record<string, { icon: IconComponent; color: string; bg: stri
   logic_set_variable: { icon: Code2, color: 'text-fuchsia-600', bg: 'bg-fuchsia-50' },
   logic_condition: { icon: GitBranch, color: 'text-violet-600', bg: 'bg-violet-50' },
   logic_redirect: { icon: ArrowRight, color: 'text-purple-600', bg: 'bg-purple-50' },
+  logic_script: { icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50' },
+  logic_typebot: { icon: MessageSquare, color: 'text-purple-600', bg: 'bg-purple-50' },
+  logic_wait: { icon: Timer, color: 'text-purple-600', bg: 'bg-purple-50' },
+  logic_ab_test: { icon: Shuffle, color: 'text-purple-600', bg: 'bg-purple-50' },
+  logic_webhook: { icon: Zap, color: 'text-purple-600', bg: 'bg-purple-50' },
+  logic_jump: { icon: CornerDownRight, color: 'text-purple-600', bg: 'bg-purple-50' },
+  logic_return: { icon: CornerUpLeft, color: 'text-purple-600', bg: 'bg-purple-50' },
+  logic_start: { icon: Flag, color: 'text-slate-600', bg: 'bg-slate-100' },
+  logic_command: { icon: Command, color: 'text-slate-600', bg: 'bg-slate-100' },
+  logic_reply: { icon: Reply, color: 'text-slate-600', bg: 'bg-slate-100' },
+  logic_invalid: { icon: XCircle, color: 'text-slate-600', bg: 'bg-slate-100' },
+  logic_sheets: { icon: Sheet, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  logic_analytics: { icon: BarChart3, color: 'text-amber-600', bg: 'bg-amber-50' },
+  logic_http_request: { icon: Zap, color: 'text-sky-600', bg: 'bg-sky-50' },
+  logic_send_email: { icon: Send, color: 'text-sky-600', bg: 'bg-sky-50' },
 };
 
 const MENU_SECTIONS = [
@@ -111,6 +138,31 @@ const MENU_SECTIONS = [
       { id: 'logic_set_variable', label: 'Set variable', icon: Code2, color: 'text-fuchsia-500' },
       { id: 'logic_condition', label: 'Condition', icon: GitBranch, color: 'text-violet-500' },
       { id: 'logic_redirect', label: 'Redirect', icon: ArrowRight, color: 'text-purple-500' },
+      { id: 'logic_script', label: 'Script', icon: FileText, color: 'text-purple-500' },
+      { id: 'logic_typebot', label: 'Typebot', icon: MessageSquare, color: 'text-purple-500' },
+      { id: 'logic_wait', label: 'Wait', icon: Timer, color: 'text-purple-500' },
+      { id: 'logic_ab_test', label: 'AB test', icon: Shuffle, color: 'text-purple-500' },
+      { id: 'logic_webhook', label: 'Webhook', icon: Zap, color: 'text-purple-500' },
+      { id: 'logic_jump', label: 'Jump', icon: CornerDownRight, color: 'text-purple-500' },
+      { id: 'logic_return', label: 'Return', icon: CornerUpLeft, color: 'text-purple-500' },
+    ],
+  },
+  {
+    title: 'Events',
+    items: [
+      { id: 'event_start', label: 'Start', icon: Flag, color: 'text-slate-500' },
+      { id: 'event_command', label: 'Command', icon: Command, color: 'text-slate-500' },
+      { id: 'event_reply', label: 'Reply', icon: Reply, color: 'text-slate-500' },
+      { id: 'event_invalid', label: 'Invalid', icon: XCircle, color: 'text-slate-500' },
+    ],
+  },
+  {
+    title: 'Integrations',
+    items: [
+      { id: 'integration_sheets', label: 'Sheets', icon: Sheet, color: 'text-emerald-500' },
+      { id: 'integration_analytics', label: 'Analytics', icon: BarChart3, color: 'text-amber-500' },
+      { id: 'integration_webhook', label: 'HTTP req', icon: Zap, color: 'text-sky-500' },
+      { id: 'integration_email', label: 'Email', icon: Send, color: 'text-sky-500' },
     ],
   },
 ];
@@ -157,7 +209,7 @@ function getBlockHandles(block: Block) {
 }
 
 const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; selected: boolean }) => {
-  const { updateNodeData } = useStore();
+  const { updateNodeData, previewNodeId } = useStore();
   const title = data.title || 'Group #1';
   const blocks = migrateToBlocks(data);
   const activeBlockId = data.activeBlockId || blocks[0]?.id || null;
@@ -303,9 +355,11 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
     setDropIdx(null);
   }, []);
 
+  const isPreviewActive = previewNodeId === id;
+
   return (
     <div
-      className={`typebot-group w-[340px] ${selected ? 'selected' : ''}`}
+      className={`typebot-group w-[340px] ${selected ? 'selected' : ''} ${isPreviewActive ? 'preview-active' : ''}`}
       onDragOver={onGroupDragOver}
       onDrop={onGroupDrop}
       role="group"
@@ -351,7 +405,13 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
         </div>
       )}
 
-      <Handle type="target" position={Position.Left} id="main-target" className="!-left-[6px]" style={{ top: 24 }} />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="main-target"
+        className="!-left-[6px]"
+        style={{ top: '50%', transform: 'translateY(-50%)' }}
+      />
 
       <div className="typebot-group-header flex items-center gap-1">
         <div className="flex-1 min-w-0">

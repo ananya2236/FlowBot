@@ -57,7 +57,7 @@ export default function PreviewModal({
   onClose: () => void;
   botId?: string;
 }) {
-  const { bots, activeBotId } = useStore();
+  const { bots, activeBotId, setPreviewNodeId } = useStore();
   const activeBot = bots.find((bot) => bot.id === (botId || activeBotId));
   const safeEdges = useMemo(() => {
     if (!activeBot) return [];
@@ -75,6 +75,14 @@ export default function PreviewModal({
   const [cloudFileLink, setCloudFileLink] = useState('');
   const variablesRef = useRef<Record<string, string>>({});
   const stepCounterRef = useRef(0);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setPreviewNodeId(null);
+      return;
+    }
+    setPreviewNodeId(currentNodeId);
+  }, [currentNodeId, isOpen, setPreviewNodeId]);
 
   const pushMessage = useCallback((message: Message) => {
     setMessages((previous) => [...previous, message]);
@@ -210,9 +218,7 @@ export default function PreviewModal({
         return;
       }
 
-      if (logic.type === 'redirect') {
-        pushMessage(createMessage('system', 'text', 'Redirect block has no connected edge.'));
-      }
+      pushMessage(createMessage('system', 'text', `${logic.type} block has no connected edge.`));
     }
 
     const fallbackEdge = findBlockEdge(safeEdges, nodeId, null);
@@ -347,12 +353,129 @@ export default function PreviewModal({
         : !['rating', 'file'].includes(pendingInput.type)
     : true;
 
+  const renderInlineInputActions = () => {
+    if (!pendingInput) return null;
+
+    if (pendingInput.type === 'file') {
+      return (
+        <div className="mt-3 space-y-2">
+          {(pendingInput.fileSources || []).includes('device') ? (
+            <>
+              <input
+                type="file"
+                multiple={pendingInput.allowMultipleFiles}
+                accept={pendingInput.acceptedFileTypes}
+                onChange={(event) => {
+                  const files = event.target.files;
+                  if (!files || files.length === 0) return;
+                  const fileNames = Array.from(files).map((file) => file.name).join(', ');
+                  void submitInputValue(fileNames);
+                }}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+              />
+              <p className="text-[11px] text-slate-500">
+                Allowed: {pendingInput.acceptedFileTypes || 'any'} | Max {pendingInput.maxFileSizeMb || 10}MB
+              </p>
+            </>
+          ) : null}
+
+          {(pendingInput.fileSources || []).includes('cloudLink') ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="url"
+                value={cloudFileLink}
+                onChange={(event) => setCloudFileLink(event.target.value)}
+                placeholder="Paste Google Drive / cloud file link"
+                className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 outline-none focus:border-orange-300"
+              />
+              <button
+                type="button"
+                onClick={() => void submitInputValue(cloudFileLink)}
+                disabled={!cloudFileLink.trim()}
+                className="rounded-xl border border-slate-200 px-3 py-2 text-[11px] font-semibold text-slate-700 disabled:opacity-50"
+              >
+                Use link
+              </button>
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (pendingInput.type === 'payment') {
+      return (
+        <div className="mt-3 space-y-2">
+          <button
+            type="button"
+            onClick={() => void submitInputValue('paid')}
+            className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100"
+          >
+            Mark as paid ({pendingInput.currency || 'USD'} {pendingInput.amount || 0})
+          </button>
+          {pendingInput.paymentMethods?.filter((method) => method.value.trim()).length ? (
+            <div className="grid grid-cols-2 gap-2">
+              {pendingInput.paymentMethods.filter((method) => method.value.trim()).map((method) => (
+                <button
+                  key={method.id}
+                  type="button"
+                  onClick={() => void submitInputValue(method.value)}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 hover:border-orange-300 hover:bg-orange-50"
+                >
+                  {method.label || method.value}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (pendingInput.type === 'rating') {
+      return (
+        <div className="mt-3 flex items-center gap-2">
+          {Array.from({ length: pendingInput.ratingScale || 5 }).map((_, index) => {
+            const rating = String(index + 1);
+            return (
+              <button
+                key={rating}
+                type="button"
+                onClick={() => void submitInputValue(rating)}
+                className="h-8 w-8 rounded-full border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-700 hover:border-orange-300 hover:bg-orange-50"
+              >
+                {rating}
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if ((pendingInput.type === 'buttons' || pendingInput.type === 'pic_choice' || pendingInput.type === 'cards')
+      && pendingInput.options?.filter((option) => option.value.trim()).length) {
+      return (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {pendingInput.options.filter((option) => option.value.trim()).map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => void submitInputValue(option.value)}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-700 hover:border-orange-300 hover:bg-orange-50"
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-[#FAFAFA] w-full max-w-[430px] h-[690px] rounded-[32px] shadow-2xl flex flex-col overflow-hidden border-[8px] border-white relative mx-4">
-        <div className="bg-white px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+    <aside className="absolute top-0 right-0 z-[90] h-full w-[430px] border-l border-slate-200 bg-[#F7F8FC] shadow-[-16px_0_32px_rgba(15,23,42,0.08)] flex flex-col">
+      <div className="bg-white px-5 py-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
               <Bot size={20} className="text-orange-600" />
@@ -368,9 +491,9 @@ export default function PreviewModal({
           <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-full text-slate-400 transition-colors">
             <X size={20} />
           </button>
-        </div>
+      </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 scroll-smooth">
+      <div className="flex-1 overflow-y-auto p-5 space-y-4 scroll-smooth">
           {messages.map((message) => (
             <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div
@@ -420,11 +543,12 @@ export default function PreviewModal({
 
           {pendingInput && (
             <div className="flex justify-start">
-              <div className="max-w-[82%] rounded-2xl rounded-tl-none border border-slate-100 bg-white px-4 py-3 shadow-sm">
+              <div className="max-w-[92%] rounded-2xl rounded-tl-none border border-slate-100 bg-white px-4 py-3 shadow-sm">
                 <p className="text-sm font-medium text-slate-800">{pendingInput.prompt}</p>
                 <div className="mt-2 text-xs text-slate-500">
                   Saving as <span className="font-semibold text-slate-700">{pendingInput.variable}</span>
                 </div>
+                {renderInlineInputActions()}
               </div>
             </div>
           )}
@@ -438,9 +562,9 @@ export default function PreviewModal({
               </div>
             </div>
           )}
-        </div>
+      </div>
 
-        <div className="border-t border-slate-100 bg-white p-5">
+      <div className="border-t border-slate-100 bg-white p-4">
           {validationError && (
             <div className="mb-3 flex items-start gap-2 rounded-2xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-600">
               <AlertCircle size={16} className="mt-0.5 shrink-0" />
@@ -464,107 +588,6 @@ export default function PreviewModal({
               </div>
             </div>
           )}
-
-          {pendingInput?.type === 'file' ? (
-            <div className="mb-3">
-              {(pendingInput.fileSources || []).includes('device') && (
-                <>
-                  <input
-                    type="file"
-                    multiple={pendingInput.allowMultipleFiles}
-                    accept={pendingInput.acceptedFileTypes}
-                    onChange={(event) => {
-                      const files = event.target.files;
-                      if (!files || files.length === 0) return;
-                      const fileNames = Array.from(files).map((file) => file.name).join(', ');
-                      void submitInputValue(fileNames);
-                    }}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
-                  />
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Allowed: {pendingInput.acceptedFileTypes || 'any'} | Max {pendingInput.maxFileSizeMb || 10}MB
-                  </p>
-                </>
-              )}
-              {(pendingInput.fileSources || []).includes('cloudLink') && (
-                <div className="mt-2 flex items-center gap-2">
-                  <input
-                    type="url"
-                    value={cloudFileLink}
-                    onChange={(event) => setCloudFileLink(event.target.value)}
-                    placeholder="Paste Google Drive / cloud file link"
-                    className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-orange-300"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => void submitInputValue(cloudFileLink)}
-                    disabled={!cloudFileLink.trim()}
-                    className="rounded-2xl border border-slate-200 px-3 py-3 text-xs font-semibold text-slate-700 disabled:opacity-50"
-                  >
-                    Use link
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : null}
-
-          {pendingInput?.type === 'payment' ? (
-            <button
-              type="button"
-              onClick={() => void submitInputValue('paid')}
-              className="mb-3 w-full rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
-            >
-              Mark as paid ({pendingInput.currency || 'USD'} {pendingInput.amount || 0})
-            </button>
-          ) : null}
-
-          {(pendingInput?.type === 'buttons' || pendingInput?.type === 'pic_choice' || pendingInput?.type === 'cards') && pendingInput.options?.filter((option) => option.value.trim()).length ? (
-            <div className="mb-3 grid grid-cols-2 gap-2">
-              {pendingInput.options.filter((option) => option.value.trim()).map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => void submitInputValue(option.value)}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:border-orange-300 hover:bg-orange-50"
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          {pendingInput?.type === 'payment' && pendingInput.paymentMethods?.filter((method) => method.value.trim()).length ? (
-            <div className="mb-3 grid grid-cols-2 gap-2">
-              {pendingInput.paymentMethods.filter((method) => method.value.trim()).map((method) => (
-                <button
-                  key={method.id}
-                  type="button"
-                  onClick={() => void submitInputValue(method.value)}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:border-orange-300 hover:bg-orange-50"
-                >
-                  {method.label || method.value}
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          {pendingInput?.type === 'rating' ? (
-            <div className="mb-3 flex items-center gap-2">
-              {Array.from({ length: pendingInput.ratingScale || 5 }).map((_, index) => {
-                const rating = String(index + 1);
-                return (
-                  <button
-                    key={rating}
-                    type="button"
-                    onClick={() => void submitInputValue(rating)}
-                    className="h-9 w-9 rounded-full border border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 hover:border-orange-300 hover:bg-orange-50"
-                  >
-                    {rating}
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
 
           <form onSubmit={handleUserInput} className="flex items-center gap-2">
             <input
@@ -592,9 +615,8 @@ export default function PreviewModal({
               )}
             </button>
           </form>
-        </div>
       </div>
-    </div>
+    </aside>
   );
 }
 
