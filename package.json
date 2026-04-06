@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "inngest:dev": "npx inngest-cli@latest dev -u http://localhost:3000/api/inngest",
-    "inngest:send:test": "npx inngest-cli@latest event send test/hello.world --data \"{\\\"name\\\":\\\"FlowBot\\\"}\"",
-    "inngest:send:flow": "npx inngest-cli@latest event send flow/execute.requested --data \"{\\\"flow\\\":{\\\"nodes\\\":[{\\\"id\\\":\\\"start\\\",\\\"type\\\":\\\"start\\\",\\\"data\\\":{}},{\\\"id\\\":\\\"g1\\\",\\\"type\\\":\\\"group\\\",\\\"data\\\":{\\\"title\\\":\\\"Group #1\\\",\\\"blocks\\\":[{\\\"id\\\":\\\"b1\\\",\\\"kind\\\":\\\"bubble\\\",\\\"type\\\":\\\"text\\\",\\\"content\\\":\\\"Hello {{name}} from flow\\\"}]}}],\\\"edges\\\":[{\\\"source\\\":\\\"start\\\",\\\"target\\\":\\\"g1\\\",\\\"sourceHandle\\\":\\\"\\\",\\\"targetHandle\\\":\\\"main-target\\\"}]},\\\"inputs\\\":{\\\"name\\\":\\\"FlowBot\\\"}}\""
+    "inngest:send:test": "node scripts/send-inngest-event.mjs test/hello.world \"{\\\"name\\\":\\\"FlowBot\\\"}\"",
+    "inngest:send:flow": "node scripts/send-inngest-event.mjs flow/execute.requested \"{\\\"flow\\\":{\\\"nodes\\\":[{\\\"id\\\":\\\"start\\\",\\\"type\\\":\\\"start\\\",\\\"data\\\":{}},{\\\"id\\\":\\\"g1\\\",\\\"type\\\":\\\"group\\\",\\\"data\\\":{\\\"title\\\":\\\"Group #1\\\",\\\"blocks\\\":[{\\\"id\\\":\\\"b1\\\",\\\"kind\\\":\\\"bubble\\\",\\\"type\\\":\\\"text\\\",\\\"content\\\":\\\"Hello {{name}} from flow\\\"}]}}],\\\"edges\\\":[{\\\"source\\\":\\\"start\\\",\\\"target\\\":\\\"g1\\\",\\\"sourceHandle\\\":\\\"\\\",\\\"targetHandle\\\":\\\"main-target\\\"}]},\\\"inputs\\\":{\\\"name\\\":\\\"FlowBot\\\"}}\""
   },
   "dependencies": {
     "clsx": "^2.1.1",

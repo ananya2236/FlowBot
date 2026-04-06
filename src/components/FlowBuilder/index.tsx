@@ -172,7 +172,7 @@ const FlowBuilderInner = () => {
   }, [activeBot, edgeMatches, selectedEdge, setEdges]);
 
   const handleClickConnectStart = useCallback(
-    (event: React.MouseEvent | React.TouchEvent, params: { handleType: string }) => {
+    (event: React.MouseEvent | React.TouchEvent, params: { handleType: string | null }) => {
       if (params.handleType !== 'source') {
         cancelPendingConnection();
         return;
@@ -190,7 +190,7 @@ const FlowBuilderInner = () => {
   );
 
   const handleConnectStart = useCallback(
-    (_event: React.MouseEvent | React.TouchEvent, params: { handleType: string }) => {
+    (_event: React.MouseEvent | React.TouchEvent, params: { handleType: string | null }) => {
       if (params.handleType !== 'source') {
         cancelPendingConnection();
         return;
@@ -306,12 +306,6 @@ const FlowBuilderInner = () => {
         }}
         onDrop={onDrop}
         onDragOver={onDragOver}
-        onPaneDoubleClick={(event) => {
-          event.preventDefault();
-          cancelPendingConnection();
-          setSelectedEdge(null);
-          setEdgeActionPos(null);
-        }}
         onPaneClick={() => {
           setSelectedEdge(null);
           setEdgeActionPos(null);
