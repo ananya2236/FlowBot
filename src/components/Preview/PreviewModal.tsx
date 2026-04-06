@@ -75,6 +75,28 @@ export default function PreviewModal({
   const [cloudFileLink, setCloudFileLink] = useState('');
   const variablesRef = useRef<Record<string, string>>({});
   const stepCounterRef = useRef(0);
+  const bubbleCounterRef = useRef(0);
+
+  const getTypingDelay = useCallback(
+    (content: string) => {
+      const typingSettings = activeBot?.settings?.typing;
+      if (!typingSettings?.typingEmulation) return 0;
+      bubbleCounterRef.current += 1;
+      if (typingSettings.disableOnFirstMessage && bubbleCounterRef.current === 1) {
+        return 0;
+      }
+
+      const wordCount = Math.max(1, content.trim().split(/\s+/).filter(Boolean).length);
+      const wordsPerMinute = Math.max(60, typingSettings.wordsPerMinute || 400);
+      const basedOnWords = (wordCount / wordsPerMinute) * 60 * 1000;
+      const cappedDelay = Math.min(
+        basedOnWords,
+        Math.max(0, typingSettings.maxDelaySeconds || 0) * 1000
+      );
+      return cappedDelay + Math.max(0, typingSettings.delayBetweenMessagesSeconds || 0) * 1000;
+    },
+    [activeBot]
+  );
 
   useEffect(() => {
     if (!isOpen) {
@@ -127,9 +149,12 @@ export default function PreviewModal({
 
       if (block.kind === 'bubble') {
         const bubble = block as BubbleBlock;
-        setIsTyping(true);
-        await new Promise((resolve) => setTimeout(resolve, 350));
         const resolvedContent = resolveTemplate(getBubbleAttachmentUrl(bubble), runtimeVariables);
+        const typingDelay = getTypingDelay(resolvedContent);
+        setIsTyping(true);
+        if (typingDelay > 0) {
+          await new Promise((resolve) => setTimeout(resolve, typingDelay));
+        }
         pushMessage(createMessage('bot', bubble.type, resolvedContent, bubble.attachmentSource, bubble.attachmentName));
         setIsTyping(false);
 
@@ -230,7 +255,7 @@ export default function PreviewModal({
     setCurrentNodeId(null);
     setPendingInput(null);
     pushMessage(createMessage('system', 'text', `Flow ended at node "${nodeId}".`));
-  }, [activeBot, pushMessage, safeEdges]);
+  }, [activeBot, getTypingDelay, pushMessage, safeEdges]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -239,6 +264,7 @@ export default function PreviewModal({
     setVariables({});
     variablesRef.current = {};
     stepCounterRef.current = 0;
+    bubbleCounterRef.current = 0;
     setCurrentNodeId(null);
     setCurrentBlockIndex(0);
     setPendingInput(null);

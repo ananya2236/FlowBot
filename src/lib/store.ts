@@ -12,7 +12,12 @@ import {
   NodeChange,
 } from 'reactflow';
 import { sanitizeFlowEdges, type GroupNodeData } from '@/lib/blocks';
+import { createDefaultBotSettings, normalizeBotSettings, type BotSettings } from '@/lib/botSettings';
 import { createDefaultThemeSettings, normalizeThemeSettings, type BotThemeSettings } from '@/lib/theme';
+
+type DeepPartial<T> = {
+  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+};
 
 export interface Bot {
   id: string;
@@ -20,14 +25,20 @@ export interface Bot {
   nodes: Node[];
   edges: Edge[];
   theme: BotThemeSettings;
+  settings: BotSettings;
   status: 'Draft' | 'Live';
   updatedAt: number;
   createdAt?: number;
 }
 
-interface FlowSnapshot {
+interface BotSnapshot {
+  name: string;
   nodes: Node[];
   edges: Edge[];
+  theme: BotThemeSettings;
+  settings: BotSettings;
+  status: Bot['status'];
+  createdAt?: number;
 }
 
 interface RemotePersistenceHandlers {
@@ -40,8 +51,8 @@ interface BotStore {
   activeBotId: string | null;
   editorNodeId: string | null;
   previewNodeId: string | null;
-  historyPast: Record<string, FlowSnapshot[]>;
-  historyFuture: Record<string, FlowSnapshot[]>;
+  historyPast: Record<string, BotSnapshot[]>;
+  historyFuture: Record<string, BotSnapshot[]>;
   remoteEnabled: boolean;
   botsLoaded: boolean;
   pendingSyncBotIds: string[];
@@ -58,6 +69,7 @@ interface BotStore {
   renameBot: (id: string, name: string) => void;
   setBotStatus: (id: string, status: Bot['status']) => void;
   updateBotTheme: (id: string, theme: Partial<BotThemeSettings>) => void;
+  updateBotSettings: (id: string, settings: DeepPartial<BotSettings>) => void;
   setActiveBot: (id: string | null) => void;
   setPreviewNodeId: (id: string | null) => void;
   setEditorNodeId: (id: string | null) => void;
@@ -93,8 +105,13 @@ const createInitialNodes = (): Node[] =>
     data: { ...node.data },
   }));
 
-function cloneFlowSnapshot(bot: Bot): FlowSnapshot {
+function cloneBotSnapshot(bot: Bot): BotSnapshot {
   return {
+    name: bot.name,
+    theme: JSON.parse(JSON.stringify(bot.theme)),
+    settings: JSON.parse(JSON.stringify(bot.settings)),
+    status: bot.status,
+    createdAt: bot.createdAt,
     nodes: bot.nodes.map((node) => ({
       ...node,
       position: { ...node.position },
@@ -107,6 +124,7 @@ function cloneFlowSnapshot(bot: Bot): FlowSnapshot {
 function cloneBot(bot: Bot): Bot {
   return {
     ...bot,
+    settings: JSON.parse(JSON.stringify(bot.settings)),
     theme: JSON.parse(JSON.stringify(bot.theme)),
     nodes: bot.nodes.map((node) => ({
       ...node,
@@ -120,6 +138,7 @@ function cloneBot(bot: Bot): Bot {
 function normalizeBot(bot: Partial<Bot> & Pick<Bot, 'id' | 'name' | 'nodes' | 'edges' | 'status' | 'updatedAt'>): Bot {
   return {
     ...bot,
+    settings: normalizeBotSettings(bot.settings),
     theme: normalizeThemeSettings(bot.theme),
     createdAt: bot.createdAt ?? bot.updatedAt,
   };
@@ -184,25 +203,24 @@ function deleteBotRemotely(botId: string) {
     });
 }
 
-function withActiveBotUpdate(
+function withTrackedBotUpdate(
   state: BotStore,
+  botId: string,
   updater: (bot: Bot) => Bot
 ): Pick<BotStore, 'bots' | 'historyPast' | 'historyFuture'> | BotStore {
-  const { activeBotId } = state;
-  if (!activeBotId) return state;
-  const activeBot = state.bots.find((bot) => bot.id === activeBotId);
-  if (!activeBot) return state;
+  const targetBot = state.bots.find((bot) => bot.id === botId);
+  if (!targetBot) return state;
 
-  const nextBot = updater(activeBot);
+  const nextBot = updater(targetBot);
   scheduleRemoteSave(nextBot);
 
   return {
-    bots: state.bots.map((bot) => (bot.id === activeBotId ? nextBot : bot)),
+    bots: state.bots.map((bot) => (bot.id === botId ? nextBot : bot)),
     historyPast: {
       ...state.historyPast,
-      [activeBotId]: [...(state.historyPast[activeBotId] || []), cloneFlowSnapshot(activeBot)].slice(-100),
+      [botId]: [...(state.historyPast[botId] || []), cloneBotSnapshot(targetBot)].slice(-100),
     },
-    historyFuture: { ...state.historyFuture, [activeBotId]: [] },
+    historyFuture: { ...state.historyFuture, [botId]: [] },
   };
 }
 
@@ -272,6 +290,7 @@ const useStore = create<BotStore>()(
           nodes: createInitialNodes(),
           edges: [],
           theme: createDefaultThemeSettings(),
+          settings: createDefaultBotSettings(),
           status: 'Draft',
           updatedAt: timestamp,
           createdAt: timestamp,
@@ -299,43 +318,50 @@ const useStore = create<BotStore>()(
       },
 
       renameBot: (id, name) => {
-        set((state) => {
-          const nextBots = state.bots.map((bot) => {
-            if (bot.id !== id) return bot;
-            const updatedBot = { ...bot, name, updatedAt: Date.now() };
-            scheduleRemoteSave(updatedBot);
-            return updatedBot;
-          });
-          return { bots: nextBots };
-        });
+        set((state) =>
+          withTrackedBotUpdate(state, id, (bot) => ({
+            ...bot,
+            name,
+            updatedAt: Date.now(),
+          }))
+        );
       },
 
       setBotStatus: (id, status) => {
-        set((state) => {
-          const nextBots = state.bots.map((bot) => {
-            if (bot.id !== id) return bot;
-            const updatedBot = { ...bot, status, updatedAt: Date.now() };
-            scheduleRemoteSave(updatedBot);
-            return updatedBot;
-          });
-          return { bots: nextBots };
-        });
+        set((state) =>
+          withTrackedBotUpdate(state, id, (bot) => ({
+            ...bot,
+            status,
+            updatedAt: Date.now(),
+          }))
+        );
       },
 
       updateBotTheme: (id, theme) => {
-        set((state) => {
-          const nextBots = state.bots.map((bot) => {
-            if (bot.id !== id) return bot;
-            const updatedBot = {
-              ...bot,
-              theme: normalizeThemeSettings({ ...bot.theme, ...theme }),
-              updatedAt: Date.now(),
-            };
-            scheduleRemoteSave(updatedBot);
-            return updatedBot;
-          });
-          return { bots: nextBots };
-        });
+        set((state) =>
+          withTrackedBotUpdate(state, id, (bot) => ({
+            ...bot,
+            theme: normalizeThemeSettings({ ...bot.theme, ...theme }),
+            updatedAt: Date.now(),
+          }))
+        );
+      },
+
+      updateBotSettings: (id, settings) => {
+        set((state) =>
+          withTrackedBotUpdate(state, id, (bot) => ({
+            ...bot,
+            settings: normalizeBotSettings({
+              ...bot.settings,
+              ...settings,
+              general: { ...bot.settings.general, ...(settings.general ?? {}) },
+              typing: { ...bot.settings.typing, ...(settings.typing ?? {}) },
+              security: { ...bot.settings.security, ...(settings.security ?? {}) },
+              metadata: { ...bot.settings.metadata, ...(settings.metadata ?? {}) },
+            }),
+            updatedAt: Date.now(),
+          }))
+        );
       },
 
       setActiveBot: (id) => {
@@ -351,8 +377,10 @@ const useStore = create<BotStore>()(
       },
 
       onNodesChange: (changes) => {
+        const activeBotId = get().activeBotId;
+        if (!activeBotId) return;
         set((state) =>
-          withActiveBotUpdate(state, (activeBot) => ({
+          withTrackedBotUpdate(state, activeBotId, (activeBot) => ({
             ...activeBot,
             nodes: applyNodeChanges(changes, activeBot.nodes),
             updatedAt: Date.now(),
@@ -361,8 +389,10 @@ const useStore = create<BotStore>()(
       },
 
       onEdgesChange: (changes) => {
+        const activeBotId = get().activeBotId;
+        if (!activeBotId) return;
         set((state) =>
-          withActiveBotUpdate(state, (activeBot) => ({
+          withTrackedBotUpdate(state, activeBotId, (activeBot) => ({
             ...activeBot,
             edges: applyEdgeChanges(changes, activeBot.edges),
             updatedAt: Date.now(),
@@ -372,9 +402,11 @@ const useStore = create<BotStore>()(
 
       onConnect: (connection) => {
         if (connection.sourceHandle === 'main-target') return;
+        const activeBotId = get().activeBotId;
+        if (!activeBotId) return;
 
         set((state) =>
-          withActiveBotUpdate(state, (activeBot) => ({
+          withTrackedBotUpdate(state, activeBotId, (activeBot) => ({
             ...activeBot,
             edges: sanitizeFlowEdges(addEdge(connection, activeBot.edges), activeBot.nodes),
             updatedAt: Date.now(),
@@ -383,8 +415,10 @@ const useStore = create<BotStore>()(
       },
 
       addNode: (type, position, data = {}) => {
+        const activeBotId = get().activeBotId;
+        if (!activeBotId) return;
         set((state) =>
-          withActiveBotUpdate(state, (activeBot) => ({
+          withTrackedBotUpdate(state, activeBotId, (activeBot) => ({
             ...activeBot,
             nodes: [
               ...activeBot.nodes,
@@ -401,8 +435,10 @@ const useStore = create<BotStore>()(
       },
 
       updateNodeData: (nodeId, data) => {
+        const activeBotId = get().activeBotId;
+        if (!activeBotId) return;
         set((state) =>
-          withActiveBotUpdate(state, (activeBot) => ({
+          withTrackedBotUpdate(state, activeBotId, (activeBot) => ({
             ...activeBot,
             nodes: activeBot.nodes.map((node) =>
               node.id === nodeId
@@ -418,8 +454,10 @@ const useStore = create<BotStore>()(
       },
 
       setNodes: (nodes) => {
+        const activeBotId = get().activeBotId;
+        if (!activeBotId) return;
         set((state) =>
-          withActiveBotUpdate(state, (activeBot) => ({
+          withTrackedBotUpdate(state, activeBotId, (activeBot) => ({
             ...activeBot,
             nodes,
             updatedAt: Date.now(),
@@ -428,8 +466,10 @@ const useStore = create<BotStore>()(
       },
 
       setEdges: (edges) => {
+        const activeBotId = get().activeBotId;
+        if (!activeBotId) return;
         set((state) =>
-          withActiveBotUpdate(state, (activeBot) => ({
+          withTrackedBotUpdate(state, activeBotId, (activeBot) => ({
             ...activeBot,
             edges,
             updatedAt: Date.now(),
@@ -449,8 +489,13 @@ const useStore = create<BotStore>()(
           const previous = past[past.length - 1];
           const updatedBot = {
             ...activeBot,
+            name: previous.name,
             nodes: previous.nodes,
             edges: previous.edges,
+            theme: previous.theme,
+            settings: previous.settings,
+            status: previous.status,
+            createdAt: previous.createdAt,
             updatedAt: Date.now(),
           };
           scheduleRemoteSave(updatedBot);
@@ -460,7 +505,7 @@ const useStore = create<BotStore>()(
             historyPast: { ...state.historyPast, [activeBotId]: past.slice(0, -1) },
             historyFuture: {
               ...state.historyFuture,
-              [activeBotId]: [cloneFlowSnapshot(activeBot), ...(state.historyFuture[activeBotId] || [])].slice(0, 100),
+              [activeBotId]: [cloneBotSnapshot(activeBot), ...(state.historyFuture[activeBotId] || [])].slice(0, 100),
             },
             bots: state.bots.map((bot) => (bot.id === activeBotId ? updatedBot : bot)),
           };
@@ -479,8 +524,13 @@ const useStore = create<BotStore>()(
           const nextSnapshot = future[0];
           const updatedBot = {
             ...activeBot,
+            name: nextSnapshot.name,
             nodes: nextSnapshot.nodes,
             edges: nextSnapshot.edges,
+            theme: nextSnapshot.theme,
+            settings: nextSnapshot.settings,
+            status: nextSnapshot.status,
+            createdAt: nextSnapshot.createdAt,
             updatedAt: Date.now(),
           };
           scheduleRemoteSave(updatedBot);
@@ -489,7 +539,7 @@ const useStore = create<BotStore>()(
             ...state,
             historyPast: {
               ...state.historyPast,
-              [activeBotId]: [...(state.historyPast[activeBotId] || []), cloneFlowSnapshot(activeBot)].slice(-100),
+              [activeBotId]: [...(state.historyPast[activeBotId] || []), cloneBotSnapshot(activeBot)].slice(-100),
             },
             historyFuture: { ...state.historyFuture, [activeBotId]: future.slice(1) },
             bots: state.bots.map((bot) => (bot.id === activeBotId ? updatedBot : bot)),

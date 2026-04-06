@@ -116,9 +116,9 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] min-h-0 bg-[#0a0a0a] text-white">
-      <aside className="w-[520px] min-w-[320px] border-r border-white/10 bg-[#101010] p-5">
-        <div className="h-full overflow-y-auto rounded-[28px] border border-white/10 bg-[#121212]">
+    <div className="flex h-[calc(100vh-64px)] min-h-0 bg-white text-slate-900">
+      <aside className="w-[520px] min-w-[320px] border-r border-orange-100 bg-[#fffaf4] p-5">
+        <div className="h-full overflow-y-auto rounded-[28px] border border-orange-100 bg-white shadow-[0_12px_40px_rgba(255,106,0,0.08)]">
           <SectionShell
             icon={<Grid2X2 size={18} />}
             label="Templates"
@@ -200,7 +200,7 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
                 <select
                   value={theme.fontFamily}
                   onChange={(event) => patchTheme({ fontFamily: event.target.value })}
-                  className="w-full rounded-2xl border border-white/10 bg-[#161616] px-4 py-3 text-sm text-white outline-none"
+                  className="w-full rounded-2xl border border-orange-100 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-orange-300"
                 >
                   {fontOptions.map((option) => (
                     <option key={option.id} value={`"${option.label}", "Segoe UI", sans-serif`}>
@@ -218,13 +218,13 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
                     onChange={(value) => patchTheme({ backgroundColor: value })}
                   />
                   <div>
-                    <div className="mb-2 text-xs font-medium text-white/65">Pattern</div>
+                    <div className="mb-2 text-xs font-medium text-slate-500">Pattern</div>
                     <select
                       value={theme.backgroundPattern}
                       onChange={(event) =>
                         patchTheme({ backgroundPattern: event.target.value as BotThemeSettings['backgroundPattern'] })
                       }
-                      className="w-full rounded-2xl border border-white/10 bg-[#161616] px-4 py-3 text-sm text-white outline-none"
+                      className="w-full rounded-2xl border border-orange-100 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-orange-300"
                     >
                       <option value="none">None</option>
                       <option value="grid">Grid</option>
@@ -256,8 +256,8 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
             onToggle={() => toggleSection('chat')}
           >
             <div className="space-y-5">
-              <div className="rounded-[24px] border border-white/10 bg-[#141414] p-5">
-                <div className="mb-4 text-xl font-semibold text-white">Container</div>
+              <div className="rounded-[24px] border border-orange-100 bg-[#fffaf4] p-5">
+                <div className="mb-4 text-xl font-semibold text-slate-900">Container</div>
                 <div className="space-y-4">
                   <StepperField
                     label="Max width"
@@ -346,14 +346,14 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
                         onChange={(event) => patchTheme({ borderRadius: Number(event.target.value) })}
                         className="w-full accent-[#ff5a24]"
                       />
-                      <div className="mt-2 text-xs text-white/65">{theme.borderRadius}px</div>
+                      <div className="mt-2 text-xs text-slate-500">{theme.borderRadius}px</div>
                     </FieldShell>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-[24px] border border-white/10 bg-[#141414] p-5">
-                <div className="mb-4 text-xl font-semibold text-white">Bot avatar</div>
+              <div className="rounded-[24px] border border-orange-100 bg-[#fffaf4] p-5">
+                <div className="mb-4 text-xl font-semibold text-slate-900">Bot avatar</div>
                 <div className="space-y-4">
                   <ToggleRow
                     label="Show avatar"
@@ -368,8 +368,8 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
                           onClick={() => patchTheme({ avatarShape: shape })}
                           className={`rounded-2xl border px-3 py-3 text-xs font-semibold capitalize transition ${
                             theme.avatarShape === shape
-                              ? 'border-[#ff5a24] bg-[#ff5a24]/15 text-white'
-                              : 'border-white/10 bg-[#181818] text-white/75'
+                              ? 'border-[#ff5a24] bg-orange-50 text-[#ff5a24]'
+                              : 'border-orange-100 bg-white text-slate-600'
                           }`}
                         >
                           {shape}
@@ -389,14 +389,14 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
             onToggle={() => toggleSection('customCss')}
           >
             <div className="space-y-3">
-              <div className="text-xs text-white/60">
+                <div className="text-xs text-slate-500">
                 Target classes like <code>.theme-preview-card</code>, <code>.theme-preview-bot</code>, and{' '}
                 <code>.theme-preview-input</code>.
               </div>
               <textarea
                 value={theme.customCss}
                 onChange={(event) => patchTheme({ customCss: event.target.value })}
-                className="min-h-[220px] w-full rounded-[20px] border border-white/10 bg-[#1b1b2b] px-4 py-4 font-mono text-sm text-slate-100 outline-none"
+                className="min-h-[220px] w-full rounded-[20px] border border-orange-100 bg-slate-950 px-4 py-4 font-mono text-sm text-orange-50 outline-none"
                 placeholder=".theme-preview-card { box-shadow: 0 24px 80px rgba(0,0,0,.18); }"
               />
             </div>
@@ -404,7 +404,7 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-hidden bg-[#0d0d0d] p-5">
+      <main className="flex-1 overflow-hidden bg-white p-5">
         <ThemePreview bot={bot} theme={theme} />
       </main>
     </div>
@@ -432,7 +432,7 @@ function ThemePreview({ bot, theme }: { bot: Bot; theme: BotThemeSettings }) {
     <div className="flex h-full items-center justify-center">
       <style>{theme.customCss}</style>
       <div
-        className="theme-preview-canvas relative flex h-full w-full items-center justify-center overflow-hidden border border-white/10 bg-[#f5f3ef] p-5 shadow-[0_18px_80px_rgba(0,0,0,0.35)]"
+        className="theme-preview-canvas relative flex h-full w-full items-center justify-center overflow-hidden rounded-[32px] border border-orange-100 bg-[#fffaf4] p-5 shadow-[0_20px_60px_rgba(255,106,0,0.12)]"
         style={canvasStyle}
       >
         {theme.enableProgressBar ? (
@@ -560,16 +560,16 @@ function SectionShell({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-b border-white/10">
+    <section className="border-b border-orange-100">
       <button
         onClick={onToggle}
         className="flex w-full items-center justify-between px-6 py-6 text-left"
       >
-        <div className="flex items-center gap-4 text-[18px] font-semibold text-white">
-          <span className="text-white/80">{icon}</span>
+        <div className="flex items-center gap-4 text-[18px] font-semibold text-slate-900">
+          <span className="text-orange-500">{icon}</span>
           {label}
         </div>
-        <ChevronDown size={18} className={`text-white/50 transition ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={18} className={`text-slate-400 transition ${open ? 'rotate-180' : ''}`} />
       </button>
       {open ? <div className="px-5 pb-5">{children}</div> : null}
     </section>
@@ -589,7 +589,7 @@ function TabButton({
     <button
       onClick={onClick}
       className={`rounded-2xl border px-5 py-3 text-sm font-semibold transition ${
-        active ? 'border-white/15 bg-[#181818] text-white' : 'border-transparent bg-[#161616] text-white/72'
+        active ? 'border-orange-200 bg-orange-50 text-orange-600' : 'border-orange-100 bg-white text-slate-600'
       }`}
     >
       {children}
@@ -607,9 +607,9 @@ function EmptyState({
   description: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-dashed border-white/10 bg-[#141414] p-6 text-white/70">
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white/5 text-white">{icon}</div>
-      <div className="mb-1 font-semibold text-white">{title}</div>
+    <div className="rounded-[24px] border border-dashed border-orange-200 bg-[#fffaf4] p-6 text-slate-500">
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">{icon}</div>
+      <div className="mb-1 font-semibold text-slate-900">{title}</div>
       <div className="text-sm">{description}</div>
     </div>
   );
@@ -625,11 +625,11 @@ function ToggleRow({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[22px] border border-white/10 bg-[#141414] px-4 py-4">
-      <div className="text-sm font-medium text-white">{label}</div>
+    <div className="flex items-center justify-between gap-4 rounded-[22px] border border-orange-100 bg-[#fffaf4] px-4 py-4">
+      <div className="text-sm font-medium text-slate-900">{label}</div>
       <button
         onClick={() => onChange(!checked)}
-        className={`relative h-8 w-14 rounded-full transition ${checked ? 'bg-[#ff5a24]' : 'bg-white/15'}`}
+        className={`relative h-8 w-14 rounded-full transition ${checked ? 'bg-[#ff5a24]' : 'bg-slate-200'}`}
       >
         <span className={`absolute top-1 h-6 w-6 rounded-full bg-white transition ${checked ? 'left-7' : 'left-1'}`} />
       </button>
@@ -646,7 +646,7 @@ function FieldShell({
 }) {
   return (
     <div>
-      <div className="mb-2 text-xs font-medium text-white/65">{label}</div>
+      <div className="mb-2 text-xs font-medium text-slate-500">{label}</div>
       {children}
     </div>
   );
@@ -663,8 +663,8 @@ function ColorField({
 }) {
   return (
     <div>
-      <div className="mb-2 text-xs font-medium text-white/65">{label}</div>
-      <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#161616] px-3 py-3">
+      <div className="mb-2 text-xs font-medium text-slate-500">{label}</div>
+      <label className="flex items-center gap-3 rounded-2xl border border-orange-100 bg-white px-3 py-3">
         <input
           type="color"
           value={value}
@@ -675,7 +675,7 @@ function ColorField({
           type="text"
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="w-full bg-transparent text-sm text-white outline-none"
+          className="w-full bg-transparent text-sm text-slate-900 outline-none"
         />
       </label>
     </div>
@@ -706,11 +706,11 @@ function StepperField({
 
   return (
     <div>
-      <div className="mb-2 text-sm font-medium text-white">{label}</div>
+      <div className="mb-2 text-sm font-medium text-slate-900">{label}</div>
       <div className="flex items-center gap-2">
         <button
           onClick={() => onValueChange(nextDown)}
-          className="rounded-2xl border border-white/10 bg-[#161616] px-4 py-3 text-xl text-white/70"
+          className="rounded-2xl border border-orange-100 bg-white px-4 py-3 text-xl text-slate-500"
         >
           -
         </button>
@@ -720,18 +720,18 @@ function StepperField({
           max={max}
           value={value}
           onChange={(event) => onValueChange(Number(event.target.value))}
-          className="w-24 rounded-2xl border border-white/10 bg-[#161616] px-4 py-3 text-center text-lg font-semibold text-white outline-none"
+          className="w-24 rounded-2xl border border-orange-100 bg-white px-4 py-3 text-center text-lg font-semibold text-slate-900 outline-none"
         />
         <button
           onClick={() => onValueChange(nextUp)}
-          className="rounded-2xl border border-white/10 bg-[#161616] px-4 py-3 text-xl text-white/70"
+          className="rounded-2xl border border-orange-100 bg-white px-4 py-3 text-xl text-slate-500"
         >
           +
         </button>
         <select
           value={unit}
           onChange={(event) => onUnitChange(event.target.value)}
-          className="rounded-2xl border border-white/10 bg-[#161616] px-4 py-3 text-sm text-white outline-none"
+          className="rounded-2xl border border-orange-100 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
         >
           <option value="px">px</option>
           <option value="%">%</option>
@@ -758,7 +758,7 @@ function TemplateCard({
     <button
       onClick={onClick}
       className={`group overflow-hidden rounded-[22px] border text-left transition ${
-        active ? 'border-[#ff5a24] shadow-[0_0_0_1px_rgba(255,90,36,0.5)]' : 'border-white/12'
+        active ? 'border-[#ff5a24] shadow-[0_0_0_1px_rgba(255,90,36,0.35)]' : 'border-orange-100 bg-white'
       }`}
     >
       <div className="aspect-[1.1/0.9] p-3" style={getTemplatePreviewStyle(settings)}>
@@ -773,15 +773,15 @@ function TemplateCard({
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-between bg-[#0f0f0f] px-4 py-3">
-        <span className="text-base font-medium text-white">{name}</span>
+      <div className="flex items-center justify-between border-t border-orange-100 bg-white px-4 py-3">
+        <span className="text-base font-medium text-slate-900">{name}</span>
         {onDelete ? (
           <span
             onClick={(event) => {
               event.stopPropagation();
               onDelete();
             }}
-            className="rounded-lg px-2 py-1 text-xs text-white/50 hover:bg-white/5 hover:text-white"
+            className="rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-orange-50 hover:text-orange-600"
           >
             Delete
           </span>

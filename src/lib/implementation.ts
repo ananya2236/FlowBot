@@ -17,6 +17,7 @@ export interface ImplementationPayload {
     updatedAt: string;
   };
   script: PublishScriptConfig;
+  settings: Bot['settings'];
   theme: Bot['theme'];
   flow: {
     nodeCount: number;
@@ -63,6 +64,7 @@ export function buildImplementationPayload(bot: Bot, config: PublishScriptConfig
       scriptEndpoint: config.scriptEndpoint,
       workspaceLink: config.workspaceLink || undefined,
     },
+    settings: bot.settings,
     theme: bot.theme,
     flow: {
       nodeCount: bot.nodes.length,

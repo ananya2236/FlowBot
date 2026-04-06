@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Undo2, Redo2, HelpCircle, Play, FileText, X, Copy, Download, Users2 } from 'lucide-react';
+import { ChevronLeft, Undo2, Redo2, Play, FileText, X, Copy, Download, Users2 } from 'lucide-react';
 import useStore from '@/lib/store';
 import { buildImplementationPayload, type ImplementationPayload } from '@/lib/implementation';
 
@@ -27,8 +27,6 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab, onTestCli
   const tabs = ['Flow', 'Theme', 'Settings', 'Share'];
   const disableUndo = !canUndo(botId);
   const disableRedo = !canRedo(botId);
-  const isThemeTab = activeTab === 'Theme';
-
   const generatePayload = () => {
     const endpoint = scriptEndpoint.trim();
     if (!endpoint) {
@@ -67,49 +65,42 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab, onTestCli
 
   return (
     <>
-      <nav className={`h-16 sticky top-0 z-50 flex items-center justify-between px-5 border-b ${isThemeTab ? 'bg-[#0c0c0c] border-white/10 text-white' : 'bg-white border-orange-500/40 text-gray-900'}`}>
+      <nav className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-orange-200 bg-white px-5 text-gray-900">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push('/')}
-            className={`rounded-xl p-3 transition-colors ${isThemeTab ? 'bg-white/8 text-white/75 hover:bg-white/12 hover:text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'}`}
+            className="rounded-xl p-2.5 text-gray-500 transition-colors hover:bg-orange-50 hover:text-orange-600"
           >
             <ChevronLeft size={18} />
           </button>
           <div className="flex items-center gap-3 pl-1">
-            <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${isThemeTab ? 'bg-white/8 text-white/70' : 'bg-slate-100 text-slate-500'}`}>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
               <FileText size={16} />
             </div>
             <input
               type="text"
               value={bot.name || ''}
               onChange={(e) => renameBot(botId, e.target.value)}
-              className={`bg-transparent border-none focus:ring-0 focus:outline-none text-xl font-semibold w-52 ${isThemeTab ? 'text-white placeholder:text-white/35' : 'text-gray-700 placeholder:text-gray-300'}`}
+              className="w-52 border-none bg-transparent text-xl font-semibold text-gray-700 placeholder:text-gray-300 focus:outline-none focus:ring-0"
               placeholder="My typebot"
             />
           </div>
-          <div className={`ml-2 flex items-center gap-1 rounded-xl px-1.5 py-1 ${isThemeTab ? 'bg-white/6' : 'bg-slate-50 border border-slate-200'}`}>
+          <div className="ml-2 flex items-center gap-1 rounded-xl border border-orange-100 bg-orange-50/70 px-1.5 py-1">
             <button
               onClick={undo}
               disabled={disableUndo}
-              className={`rounded-lg p-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${isThemeTab ? 'text-white/45 hover:bg-white/10 hover:text-white/75' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'}`}
+              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-white hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Undo2 size={15} />
             </button>
             <button
               onClick={redo}
               disabled={disableRedo}
-              className={`rounded-lg p-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${isThemeTab ? 'text-white/45 hover:bg-white/10 hover:text-white/75' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'}`}
+              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-white hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Redo2 size={15} />
             </button>
           </div>
-          <button
-            onClick={() => window.open('https://docs.convex.dev/home', '_blank', 'noopener,noreferrer')}
-            className={`ml-1 flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${isThemeTab ? 'bg-white/8 text-white hover:bg-white/12' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
-          >
-            <HelpCircle size={14} />
-            Help
-          </button>
         </div>
 
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4">
@@ -117,14 +108,10 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab, onTestCli
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`rounded-2xl px-5 py-3 text-sm font-semibold transition-all ${
+              className={`rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all ${
                 activeTab === tab
-                  ? isThemeTab
-                    ? 'border border-white/15 bg-white/5 text-white'
-                    : 'border border-slate-200 bg-white text-gray-900 shadow-sm'
-                  : isThemeTab
-                    ? 'text-white/75 hover:text-white'
-                    : 'text-gray-500 hover:text-gray-800'
+                  ? 'border border-orange-200 bg-orange-50 text-orange-600 shadow-sm'
+                  : 'text-gray-500 hover:bg-orange-50 hover:text-gray-800'
               }`}
             >
               {tab}
@@ -135,7 +122,7 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab, onTestCli
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveTab('Share')}
-            className={`flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold transition-colors ${isThemeTab ? 'bg-white/8 text-white hover:bg-white/12' : 'text-gray-600 hover:bg-gray-100'}`}
+            className="flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-orange-50 hover:text-orange-600"
           >
             <Users2 size={14} />
             Share
@@ -143,7 +130,7 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab, onTestCli
           {activeTab === 'Flow' ? (
             <button
               onClick={onTestClick}
-              className={`flex items-center gap-1.5 rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors ${isThemeTab ? 'border-white/10 text-white hover:bg-white/10' : 'border-gray-200 text-gray-600 hover:bg-gray-100'}`}
+              className="flex items-center gap-1.5 rounded-2xl border border-orange-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-orange-50 hover:text-orange-600"
             >
               <Play size={12} />
               Test
@@ -151,7 +138,7 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab, onTestCli
           ) : null}
           <button
             onClick={() => setIsPublishOpen(true)}
-            className="rounded-2xl bg-[#ff5a24] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#ff6e40]"
+            className="rounded-2xl bg-[#ff5a24] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#ff6e40]"
           >
             Publish
           </button>
