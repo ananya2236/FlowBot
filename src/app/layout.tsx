@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AppConvexProvider from "@/components/Providers/ConvexProvider";
 
 export const metadata: Metadata = {
   title: "FlowBot",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AppConvexProvider>{children}</AppConvexProvider>
+      </body>
     </html>
   );
 }

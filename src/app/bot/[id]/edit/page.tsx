@@ -7,15 +7,15 @@ import EditorSidebar from '@/components/Sidebar/EditorSidebar';
 import FlowBuilder from '@/components/FlowBuilder';
 import NodeEditor from '@/components/NodeEditor';
 import PreviewModal from '@/components/Preview/PreviewModal';
-import { Settings as SettingsIcon, Layout, Bot, Share2, Copy, Check, Palette, ShieldCheck } from 'lucide-react';
+import ThemeEditor from '@/components/Theme/ThemeEditor';
+import { Settings as SettingsIcon, Bot, Share2, Copy, Check, ShieldCheck } from 'lucide-react';
 
 export default function BotEditorPage() {
   const { id } = useParams();
-  const { setActiveBot, bots, renameBot, setBotStatus } = useStore();
+  const { setActiveBot, bots, renameBot, setBotStatus, botsLoaded, remoteEnabled } = useStore();
   const botId = Array.isArray(id) ? id[0] : id;
   const [activeTab, setActiveTab] = useState('Flow');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [selectedTheme, setSelectedTheme] = useState('Modern Orange');
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     setActiveBot(botId ?? null);
@@ -23,6 +23,20 @@ export default function BotEditorPage() {
   }, [botId, setActiveBot]);
 
   const bot = bots.find((b) => b.id === botId);
+
+  if (!botsLoaded && remoteEnabled) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white text-black">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-6 animate-pulse">
+            <Bot size={32} className="text-orange-500" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Loading bot</h1>
+          <p className="text-slate-500 font-medium">Fetching the latest workflow from Convex.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!bot) {
     return (
@@ -58,47 +72,7 @@ export default function BotEditorPage() {
           </div>
         );
       case 'Theme':
-        return (
-          <div className="flex-1 overflow-y-auto p-12 bg-white dotted-bg">
-            <div className="max-w-4xl mx-auto">
-              <header className="mb-12">
-                <h2 className="text-4xl font-bold mb-2 tracking-tight text-black">Theme Settings</h2>
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Customize your WhatsApp bot&apos;s visual identity</p>
-              </header>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <section className="space-y-8">
-                  <div>
-                    <h3 className="text-lg font-bold mb-4 tracking-tight flex items-center gap-2 text-black">
-                      <Layout size={20} className="text-orange-500" /> WhatsApp Templates
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {['Minimal Light', 'Clean Business', 'Modern Orange', 'Technical Slate'].map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => setSelectedTheme(t)}
-                          className={`aspect-video bg-slate-50 border-2 rounded-2xl p-4 hover:border-orange-500 transition-all cursor-pointer group relative overflow-hidden text-left ${
-                            selectedTheme === t ? 'border-orange-500 shadow-lg shadow-orange-200/50' : 'border-slate-100'
-                          }`}
-                        >
-                          <div className="h-full flex flex-col justify-between relative z-10">
-                            <div className="w-8 h-1.5 bg-slate-200 rounded-full" />
-                            <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-black transition-colors">{t}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                    <div className="mt-4 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-xs text-orange-700 font-medium flex items-center gap-2">
-                      <Palette size={14} />
-                      Active theme: {selectedTheme}
-                    </div>
-                  </div>
-                </section>
-              </div>
-            </div>
-          </div>
-        );
+        return <ThemeEditor bot={bot} />;
       case 'Settings':
         return (
           <div className="flex-1 overflow-y-auto p-12 bg-white dotted-bg">
@@ -203,7 +177,7 @@ export default function BotEditorPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-white">
+    <div className={`flex flex-col h-screen overflow-hidden ${activeTab === 'Theme' ? 'bg-[#0a0a0a]' : 'bg-white'}`}>
       <EditorNavbar
         botId={botId || ''}
         activeTab={activeTab}

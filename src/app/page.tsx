@@ -6,7 +6,7 @@ import CreateBotButton from '@/components/Dashboard/CreateBotButton';
 import { Bot, Search } from 'lucide-react';
 
 export default function Dashboard() {
-  const { bots } = useStore();
+  const { bots, botsLoaded, remoteEnabled } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredBots = bots.filter(bot => 
@@ -50,7 +50,11 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {bots.length === 0 ? (
+        {!botsLoaded && remoteEnabled ? (
+          <div className="flex flex-col items-center justify-center py-24 bg-slate-50 border border-slate-100 rounded-3xl border-dashed">
+            <div className="text-sm font-semibold text-slate-500 uppercase tracking-[0.2em]">Loading workflows...</div>
+          </div>
+        ) : bots.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 bg-slate-50 border border-slate-100 rounded-3xl border-dashed">
             <div className="p-6 bg-white rounded-2xl mb-6 text-orange-500 border border-slate-100 shadow-sm">
               <Bot size={48} strokeWidth={1.5} />

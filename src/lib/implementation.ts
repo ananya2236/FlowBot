@@ -17,6 +17,7 @@ export interface ImplementationPayload {
     updatedAt: string;
   };
   script: PublishScriptConfig;
+  theme: Bot['theme'];
   flow: {
     nodeCount: number;
     edgeCount: number;
@@ -62,6 +63,7 @@ export function buildImplementationPayload(bot: Bot, config: PublishScriptConfig
       scriptEndpoint: config.scriptEndpoint,
       workspaceLink: config.workspaceLink || undefined,
     },
+    theme: bot.theme,
     flow: {
       nodeCount: bot.nodes.length,
       edgeCount: safeEdges.length,
