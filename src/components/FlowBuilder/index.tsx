@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useRef, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useMemo, useState } from 'react';
 import ReactFlow, {
   Background,
   Panel,
@@ -10,6 +10,8 @@ import ReactFlow, {
   ConnectionLineType,
   MarkerType,
   Position,
+  useStoreApi as useReactFlowStoreApi,
+  type Edge as FlowEdge,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { nanoid } from 'nanoid';
@@ -53,8 +55,12 @@ function cloneGroupDataWithFreshIds(sourceData: unknown): GroupNodeData {
 const FlowBuilderInner = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
+  const reactFlowStoreApi = useReactFlowStoreApi();
   const copiedGroupsRef = useRef<CopiedGroupTemplate[]>([]);
   const pasteCountRef = useRef(0);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [selectedEdge, setSelectedEdge] = useState<FlowEdge | null>(null);
+  const [edgeActionPos, setEdgeActionPos] = useState<{ x: number; y: number } | null>(null);
   
   const { 
     activeBotId, 
@@ -142,8 +148,67 @@ const FlowBuilderInner = () => {
 
   const snapGrid: [number, number] = useMemo(() => [12, 12], []);
 
+  const cancelPendingConnection = useCallback(() => {
+    reactFlowStoreApi.getState().cancelConnection();
+    setIsConnecting(false);
+  }, [reactFlowStoreApi]);
+
+  const edgeMatches = useCallback((candidate: FlowEdge, target: FlowEdge) => {
+    if (target.id) return candidate.id === target.id;
+    return (
+      candidate.source === target.source &&
+      candidate.target === target.target &&
+      (candidate.sourceHandle || '') === (target.sourceHandle || '') &&
+      (candidate.targetHandle || '') === (target.targetHandle || '')
+    );
+  }, []);
+
+  const removeSelectedEdge = useCallback(() => {
+    if (!selectedEdge || !activeBot) return;
+    const nextEdges = activeBot.edges.filter((edge) => !edgeMatches(edge, selectedEdge));
+    setEdges(nextEdges);
+    setSelectedEdge(null);
+    setEdgeActionPos(null);
+  }, [activeBot, edgeMatches, selectedEdge, setEdges]);
+
+  const handleClickConnectStart = useCallback(
+    (event: React.MouseEvent | React.TouchEvent, params: { handleType: string }) => {
+      if (params.handleType !== 'source') {
+        cancelPendingConnection();
+        return;
+      }
+
+      // Require double-tap / double-click for click-to-connect mode.
+      if ('detail' in event && event.detail < 2) {
+        cancelPendingConnection();
+        return;
+      }
+
+      setIsConnecting(true);
+    },
+    [cancelPendingConnection]
+  );
+
+  const handleConnectStart = useCallback(
+    (_event: React.MouseEvent | React.TouchEvent, params: { handleType: string }) => {
+      if (params.handleType !== 'source') {
+        cancelPendingConnection();
+        return;
+      }
+      // Keep drag-connect seamless.
+      setIsConnecting(true);
+    },
+    [cancelPendingConnection]
+  );
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isConnecting) {
+        cancelPendingConnection();
+        event.preventDefault();
+        return;
+      }
+
       const isCopy = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c';
       const isPaste = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v';
       if (!isCopy && !isPaste) return;
@@ -189,7 +254,34 @@ const FlowBuilderInner = () => {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [addNode, selectedGroups]);
+  }, [addNode, cancelPendingConnection, isConnecting, selectedGroups]);
+
+  useEffect(() => {
+    const onGlobalDoubleClick = () => {
+      if (!isConnecting) return;
+      cancelPendingConnection();
+    };
+
+    window.addEventListener('dblclick', onGlobalDoubleClick);
+    return () => window.removeEventListener('dblclick', onGlobalDoubleClick);
+  }, [cancelPendingConnection, isConnecting]);
+
+  useEffect(() => {
+    if (!selectedEdge) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectedEdge(null);
+        setEdgeActionPos(null);
+      }
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        removeSelectedEdge();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [removeSelectedEdge, selectedEdge]);
 
   return (
     <div className="w-full h-full min-h-0 relative" ref={reactFlowWrapper}>
@@ -199,11 +291,36 @@ const FlowBuilderInner = () => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onConnectStart={handleConnectStart}
+        onConnectEnd={() => setIsConnecting(false)}
+        onClickConnectStart={handleClickConnectStart}
+        onClickConnectEnd={() => setIsConnecting(false)}
+        onEdgeClick={(event, edge) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const wrapper = reactFlowWrapper.current?.getBoundingClientRect();
+          const baseX = wrapper ? event.clientX - wrapper.left : event.clientX;
+          const baseY = wrapper ? event.clientY - wrapper.top : event.clientY;
+          setSelectedEdge(edge);
+          setEdgeActionPos({ x: baseX, y: baseY });
+        }}
         onDrop={onDrop}
         onDragOver={onDragOver}
+        onPaneDoubleClick={(event) => {
+          event.preventDefault();
+          cancelPendingConnection();
+          setSelectedEdge(null);
+          setEdgeActionPos(null);
+        }}
+        onPaneClick={() => {
+          setSelectedEdge(null);
+          setEdgeActionPos(null);
+        }}
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
         connectionLineType={ConnectionLineType.Step}
+        connectionLineStyle={{ stroke: '#ff6a00', strokeWidth: 1.9, strokeDasharray: '6 5' }}
+        connectOnClick
         fitView
         snapToGrid
         snapGrid={snapGrid}
@@ -220,6 +337,16 @@ const FlowBuilderInner = () => {
           <CanvasToolbar />
         </Panel>
       </ReactFlow>
+      {selectedEdge && edgeActionPos ? (
+        <button
+          type="button"
+          onClick={removeSelectedEdge}
+          className="absolute z-[120] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-red-600 shadow-md hover:bg-red-50"
+          style={{ left: edgeActionPos.x, top: edgeActionPos.y }}
+        >
+          Remove connection
+        </button>
+      ) : null}
     </div>
   );
 };
