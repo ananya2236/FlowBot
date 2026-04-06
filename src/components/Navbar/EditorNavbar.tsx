@@ -65,53 +65,51 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab, onTestCli
 
   return (
     <>
-      <nav className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-orange-200 bg-white px-5 text-gray-900">
-        <div className="flex items-center gap-3">
+      <nav className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-orange-200 bg-white px-4 text-gray-900">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={() => router.push('/')}
-            className="rounded-xl p-2.5 text-gray-500 transition-colors hover:bg-orange-50 hover:text-orange-600"
+            className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-orange-50 hover:text-orange-600"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} />
           </button>
-          <div className="flex items-center gap-3 pl-1">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
-              <FileText size={16} />
+          <div className="flex items-center gap-2.5 pl-1">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 text-orange-500">
+              <FileText size={14} />
             </div>
             <input
               type="text"
               value={bot.name || ''}
               onChange={(e) => renameBot(botId, e.target.value)}
-              className="w-52 border-none bg-transparent text-xl font-semibold text-gray-700 placeholder:text-gray-300 focus:outline-none focus:ring-0"
-              placeholder="My typebot"
+              className="w-44 border-none bg-transparent text-base font-semibold text-gray-700 placeholder:text-gray-300 focus:outline-none focus:ring-0"
+              placeholder="My SpinFlow"
             />
           </div>
-          <div className="ml-2 flex items-center gap-1 rounded-xl border border-orange-100 bg-orange-50/70 px-1.5 py-1">
-            <button
-              onClick={undo}
-              disabled={disableUndo}
-              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-white hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Undo2 size={15} />
-            </button>
-            <button
-              onClick={redo}
-              disabled={disableRedo}
-              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-white hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Redo2 size={15} />
-            </button>
-          </div>
+          <button
+            onClick={undo}
+            disabled={disableUndo}
+            className="ml-1 rounded-lg p-2 text-gray-400 transition-colors hover:bg-orange-50 hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Undo2 size={14} />
+          </button>
+          <button
+            onClick={redo}
+            disabled={disableRedo}
+            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-orange-50 hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Redo2 size={14} />
+          </button>
         </div>
 
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4">
+        <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-2">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all ${
+              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all ${
                 activeTab === tab
-                  ? 'border border-orange-200 bg-orange-50 text-orange-600 shadow-sm'
-                  : 'text-gray-500 hover:bg-orange-50 hover:text-gray-800'
+                  ? 'border-orange-200 bg-orange-50 text-orange-600'
+                  : 'border-transparent text-gray-500 hover:border-orange-100 hover:bg-orange-50 hover:text-gray-800'
               }`}
             >
               {tab}
@@ -122,23 +120,27 @@ export default function EditorNavbar({ botId, activeTab, setActiveTab, onTestCli
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveTab('Share')}
-            className="flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-orange-50 hover:text-orange-600"
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+              activeTab === 'Share'
+                ? 'border-orange-200 bg-orange-50 text-orange-600'
+                : 'border-transparent text-gray-600 hover:border-orange-100 hover:bg-orange-50 hover:text-orange-600'
+            }`}
           >
-            <Users2 size={14} />
+            <Users2 size={13} />
             Share
           </button>
           {activeTab === 'Flow' ? (
             <button
               onClick={onTestClick}
-              className="flex items-center gap-1.5 rounded-2xl border border-orange-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-orange-50 hover:text-orange-600"
+              className="flex items-center gap-1.5 rounded-lg border border-orange-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-orange-50 hover:text-orange-600"
             >
-              <Play size={12} />
+              <Play size={11} />
               Test
             </button>
           ) : null}
           <button
             onClick={() => setIsPublishOpen(true)}
-            className="rounded-2xl bg-[#ff5a24] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#ff6e40]"
+            className="rounded-lg bg-[#ff5a24] px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#ff6e40]"
           >
             Publish
           </button>

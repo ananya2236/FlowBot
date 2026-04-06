@@ -285,7 +285,7 @@ const BLOCK_LABELS: Record<string, string> = {
   logic_condition: 'Condition',
   logic_redirect: 'Redirect',
   logic_script: 'Script',
-  logic_typebot: 'Typebot',
+  logic_typebot: 'SpinFlow',
   logic_wait: 'Wait',
   logic_ab_test: 'AB test',
   logic_webhook: 'Webhook',
@@ -451,7 +451,7 @@ function createDefaultPaymentMethods(): InputChoice[] {
 const ACTION_DEFAULT_LABELS: Record<Exclude<LogicBlockType, 'set_variable' | 'condition'>, string> = {
   redirect: 'Redirect to another group',
   script: 'Run custom script',
-  typebot: 'Hand off to typebot flow',
+  typebot: 'Hand off to SpinFlow flow',
   wait: 'Wait before next step',
   ab_test: 'A/B test split',
   webhook: 'Trigger webhook',

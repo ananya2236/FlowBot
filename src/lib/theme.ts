@@ -45,19 +45,23 @@ export interface SavedThemeRecord {
 export const THEME_STORAGE_KEY = 'flowbot-theme-library';
 
 const fontFamilyMap = {
-  manrope: '"Manrope", "Segoe UI", sans-serif',
-  outfit: '"Outfit", "Segoe UI", sans-serif',
-  sora: '"Sora", "Segoe UI", sans-serif',
-  urbanist: '"Urbanist", "Segoe UI", sans-serif',
-  nunito: '"Nunito", "Segoe UI", sans-serif',
+  manrope: 'var(--font-manrope), "Segoe UI", sans-serif',
+  outfit: 'var(--font-outfit), "Segoe UI", sans-serif',
+  sora: 'var(--font-sora), "Segoe UI", sans-serif',
+  urbanist: 'var(--font-urbanist), "Segoe UI", sans-serif',
+  nunito: 'var(--font-nunito), "Segoe UI", sans-serif',
+  poppins: 'var(--font-poppins), "Segoe UI", sans-serif',
+  spaceGrotesk: 'var(--font-space-grotesk), "Segoe UI", sans-serif',
 } as const;
 
 export const fontOptions = [
-  { id: 'manrope', label: 'Manrope' },
-  { id: 'outfit', label: 'Outfit' },
-  { id: 'sora', label: 'Sora' },
-  { id: 'urbanist', label: 'Urbanist' },
-  { id: 'nunito', label: 'Nunito' },
+  { id: 'manrope', label: 'Manrope', family: fontFamilyMap.manrope },
+  { id: 'outfit', label: 'Outfit', family: fontFamilyMap.outfit },
+  { id: 'sora', label: 'Sora', family: fontFamilyMap.sora },
+  { id: 'urbanist', label: 'Urbanist', family: fontFamilyMap.urbanist },
+  { id: 'nunito', label: 'Nunito', family: fontFamilyMap.nunito },
+  { id: 'poppins', label: 'Poppins', family: fontFamilyMap.poppins },
+  { id: 'spaceGrotesk', label: 'Space Grotesk', family: fontFamilyMap.spaceGrotesk },
 ] as const;
 
 export function createDefaultThemeSettings(): BotThemeSettings {
@@ -111,8 +115,8 @@ function makeTemplate(
 }
 
 export const themeTemplates: ThemeTemplate[] = [
-  makeTemplate('typebot-light', 'Typebot Light', 'Clean light cards with orange accents', 'light', {}),
-  makeTemplate('typebot-dark', 'Typebot Dark', 'Dark shell with warm action color', 'dark', {
+  makeTemplate('typebot-light', 'SpinFlow Light', 'Clean light cards with orange accents', 'light', {}),
+  makeTemplate('typebot-dark', 'SpinFlow Dark', 'Dark shell with warm action color', 'dark', {
     backgroundColor: '#080808',
     cardBackground: '#111111',
     cardTextColor: '#f8fafc',
@@ -122,11 +126,11 @@ export const themeTemplates: ThemeTemplate[] = [
     inputTextColor: '#f8fafc',
     borderColor: '#303030',
   }),
-  makeTemplate('typebot-light-legacy', 'Typebot Light Legacy', 'Legacy light blue action palette', 'light', {
+  makeTemplate('typebot-light-legacy', 'SpinFlow Light Legacy', 'Legacy light blue action palette', 'light', {
     accentColor: '#2563eb',
     userBubbleColor: '#2563eb',
   }),
-  makeTemplate('typebot-dark-legacy', 'Typebot Dark Legacy', 'Legacy dark blue contrast', 'dark', {
+  makeTemplate('typebot-dark-legacy', 'SpinFlow Dark Legacy', 'Legacy dark blue contrast', 'dark', {
     backgroundColor: '#0b1020',
     cardBackground: '#12182a',
     cardTextColor: '#f8fafc',
@@ -238,11 +242,3 @@ export function getAvatarRadius(shape: BotThemeSettings['avatarShape']) {
   if (shape === 'square') return '12px';
   return '20px';
 }
-
-export const sampleThemeMessages = [
-  { id: 'm1', type: 'bot', text: 'Hey - wave' },
-  { id: 'm2', type: 'bot', text: 'Thank you for your interest in our marketing services.' },
-  { id: 'm3', type: 'bot', text: "Let's have a quick chat about your current situation." },
-  { id: 'm4', type: 'bot', text: 'Ready?' },
-  { id: 'm5', type: 'user', text: 'Yes!' },
-] as const;

@@ -9,22 +9,20 @@ import {
   Grid2X2,
   MessageSquare,
   Save,
-  Sparkles,
 } from 'lucide-react';
 import useStore, { type Bot } from '@/lib/store';
 import {
   applyThemeTemplate,
   fontOptions,
-  getAvatarRadius,
   getTemplatePreviewStyle,
   normalizeThemeSettings,
-  sampleThemeMessages,
   THEME_STORAGE_KEY,
   themeTemplates,
   type BotThemeSettings,
   type SavedThemeRecord,
   withOpacity,
 } from '@/lib/theme';
+import FlowPreview from '@/components/Preview/FlowPreview';
 
 interface ThemeEditorProps {
   bot: Bot;
@@ -48,9 +46,9 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
   const [templateTab, setTemplateTab] = React.useState<'saved' | 'gallery'>('gallery');
   const [savedThemes, setSavedThemes] = React.useState<SavedThemeRecord[]>([]);
   const [openSections, setOpenSections] = React.useState<Record<SectionKey, boolean>>({
-    templates: true,
-    global: true,
-    chat: true,
+    templates: false,
+    global: false,
+    chat: false,
     customCss: false,
   });
 
@@ -117,8 +115,8 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
 
   return (
     <div className="flex h-[calc(100vh-64px)] min-h-0 bg-white text-slate-900">
-      <aside className="w-[520px] min-w-[320px] border-r border-orange-100 bg-[#fffaf4] p-5">
-        <div className="h-full overflow-y-auto rounded-[28px] border border-orange-100 bg-white shadow-[0_12px_40px_rgba(255,106,0,0.08)]">
+      <aside className="w-[400px] min-w-[320px] border-r border-orange-100 bg-[#fffaf4] p-4">
+        <div className="h-full overflow-y-auto rounded-[24px] border border-orange-100 bg-white shadow-[0_12px_32px_rgba(255,106,0,0.07)]">
           <SectionShell
             icon={<Grid2X2 size={18} />}
             label="Templates"
@@ -186,7 +184,7 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
           >
             <div className="space-y-5">
               <ToggleRow
-                label="Show Typebot brand"
+                label="Show Spinabot brand"
                 checked={theme.showBranding}
                 onChange={(checked) => patchTheme({ showBranding: checked })}
               />
@@ -203,7 +201,7 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
                   className="w-full rounded-2xl border border-orange-100 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-orange-300"
                 >
                   {fontOptions.map((option) => (
-                    <option key={option.id} value={`"${option.label}", "Segoe UI", sans-serif`}>
+                    <option key={option.id} value={option.family}>
                       {option.label}
                     </option>
                   ))}
@@ -404,7 +402,7 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-hidden bg-white p-5">
+      <main className="flex-1 overflow-hidden bg-white p-4">
         <ThemePreview bot={bot} theme={theme} />
       </main>
     </div>
@@ -412,136 +410,15 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
 }
 
 function ThemePreview({ bot, theme }: { bot: Bot; theme: BotThemeSettings }) {
-  const canvasStyle = {
-    ...getTemplatePreviewStyle(theme),
-    maxWidth: `${theme.containerMaxWidth}${theme.containerWidthUnit}`,
-    maxHeight: `${theme.containerMaxHeight}${theme.containerHeightUnit}`,
-    borderColor: theme.borderColor,
-    borderRadius: `${theme.borderRadius + 8}px`,
-    fontFamily: theme.fontFamily,
-  } as React.CSSProperties;
-
-  const cardStyle = {
-    background: theme.cardBackground,
-    color: theme.cardTextColor,
-    borderColor: withOpacity(theme.borderColor, 0.45),
-    borderRadius: `${theme.borderRadius}px`,
-  } as React.CSSProperties;
-
   return (
     <div className="flex h-full items-center justify-center">
       <style>{theme.customCss}</style>
-      <div
-        className="theme-preview-canvas relative flex h-full w-full items-center justify-center overflow-hidden rounded-[32px] border border-orange-100 bg-[#fffaf4] p-5 shadow-[0_20px_60px_rgba(255,106,0,0.12)]"
-        style={canvasStyle}
-      >
-        {theme.enableProgressBar ? (
-          <div className="absolute left-8 right-8 top-6 h-2 overflow-hidden rounded-full bg-black/10">
-            <div className="h-full rounded-full" style={{ width: '54%', background: theme.accentColor }} />
-          </div>
-        ) : null}
-
-        <div
-          className="theme-preview-card flex h-full w-full flex-col overflow-hidden border"
-          style={cardStyle}
-        >
-          <div className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: withOpacity(theme.borderColor, 0.18) }}>
-            <div className="flex items-center gap-3">
-              {theme.showAvatar ? (
-                <div
-                  className="flex h-11 w-11 items-center justify-center text-base font-semibold text-white"
-                  style={{
-                    background: theme.accentColor,
-                    borderRadius: getAvatarRadius(theme.avatarShape),
-                  }}
-                >
-                  {bot.name.slice(0, 1).toUpperCase()}
-                </div>
-              ) : null}
-              <div>
-                <div className="text-sm font-semibold">{bot.name}</div>
-                <div className="text-xs opacity-60">Lead qualification flow</div>
-              </div>
-            </div>
-            <div className="rounded-full px-3 py-1 text-xs font-semibold" style={{ background: withOpacity(theme.accentColor, 0.12), color: theme.accentColor }}>
-              Theme preview
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-hidden px-8 py-8">
-            <div className="mx-auto flex h-full max-w-[880px] flex-col justify-between gap-6">
-              <div className="space-y-4">
-                {sampleThemeMessages.map((message, index) => (
-                  <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`flex items-end gap-3 ${message.type === 'user' ? 'flex-row-reverse' : ''}`}>
-                      {theme.showAvatar && message.type === 'bot' && index === 3 ? (
-                        <div
-                          className="flex h-13 w-13 shrink-0 items-center justify-center border text-lg font-semibold"
-                          style={{
-                            background: theme.cardBackground,
-                            color: theme.accentColor,
-                            borderColor: withOpacity(theme.borderColor, 0.35),
-                            borderRadius: getAvatarRadius(theme.avatarShape),
-                          }}
-                        >
-                          {bot.name.slice(0, 1).toUpperCase()}
-                        </div>
-                      ) : theme.showAvatar && message.type === 'bot' ? (
-                        <div
-                          className="flex h-10 w-10 shrink-0 items-center justify-center text-sm font-semibold text-white"
-                          style={{
-                            background: theme.accentColor,
-                            borderRadius: getAvatarRadius(theme.avatarShape),
-                            opacity: index === 0 ? 0 : 1,
-                          }}
-                        >
-                          {bot.name.slice(0, 1).toUpperCase()}
-                        </div>
-                      ) : null}
-
-                      <div
-                        className={`theme-preview-bubble max-w-[72%] border px-5 py-4 text-[15px] shadow-sm ${
-                          message.type === 'user' ? 'theme-preview-user' : 'theme-preview-bot'
-                        }`}
-                        style={{
-                          background: message.type === 'user' ? theme.userBubbleColor : theme.botBubbleColor,
-                          color: message.type === 'user' ? theme.userTextColor : theme.botTextColor,
-                          borderColor: withOpacity(theme.borderColor, 0.18),
-                          borderRadius: `${theme.borderRadius}px`,
-                        }}
-                      >
-                        {index === 1 ? (
-                          <div className="space-y-4">
-                            <div className="overflow-hidden rounded-[24px] border" style={{ borderColor: withOpacity(theme.borderColor, 0.14) }}>
-                              <div className="aspect-[4/3] w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.45),transparent_18%),linear-gradient(135deg,#d89b52,#f1c27b_40%,#6b8dbf)]" />
-                            </div>
-                            <div>{message.text}</div>
-                          </div>
-                        ) : (
-                          message.text
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between gap-6">
-                <div className="theme-preview-input flex min-w-[320px] items-center gap-3 rounded-[24px] border px-4 py-3" style={{ background: theme.inputBackground, color: theme.inputTextColor, borderColor: withOpacity(theme.borderColor, 0.24) }}>
-                  <Sparkles size={16} className="opacity-60" />
-                  <span className="text-sm opacity-70">Write your reply...</span>
-                </div>
-
-                {theme.showBranding ? (
-                  <div className="rounded-2xl border px-4 py-3 text-sm font-semibold" style={{ borderColor: withOpacity(theme.borderColor, 0.24), background: withOpacity(theme.cardBackground, 0.9) }}>
-                    Made with Typebot
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <FlowPreview
+        bot={bot}
+        className="theme-preview-card max-w-[980px] shadow-[0_12px_32px_rgba(15,23,42,0.08)]"
+        headerLabel="Theme preview"
+        showVariables={false}
+      />
     </div>
   );
 }
@@ -563,15 +440,15 @@ function SectionShell({
     <section className="border-b border-orange-100">
       <button
         onClick={onToggle}
-        className="flex w-full items-center justify-between px-6 py-6 text-left"
+        className="flex w-full items-center justify-between px-5 py-4 text-left"
       >
-        <div className="flex items-center gap-4 text-[18px] font-semibold text-slate-900">
+        <div className="flex items-center gap-3 text-base font-semibold text-slate-900">
           <span className="text-orange-500">{icon}</span>
           {label}
         </div>
         <ChevronDown size={18} className={`text-slate-400 transition ${open ? 'rotate-180' : ''}`} />
       </button>
-      {open ? <div className="px-5 pb-5">{children}</div> : null}
+      {open ? <div className="px-4 pb-4">{children}</div> : null}
     </section>
   );
 }

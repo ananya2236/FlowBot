@@ -82,7 +82,7 @@ const SECTIONS = [
       { id: 'logic_condition', label: 'Condition', icon: GitBranch, color: 'text-purple-500' },
       { id: 'logic_redirect', label: 'Redirect', icon: ArrowRight, color: 'text-purple-500' },
       { id: 'logic_script', label: 'Script', icon: FileText, color: 'text-purple-500' },
-      { id: 'logic_typebot', label: 'Typebot', icon: MessageSquare, color: 'text-purple-500' },
+      { id: 'logic_typebot', label: 'SpinFlow', icon: MessageSquare, color: 'text-purple-500' },
       { id: 'logic_wait', label: 'Wait', icon: Timer, color: 'text-purple-500' },
       { id: 'logic_ab_test', label: 'AB Test', icon: Shuffle, color: 'text-purple-500' },
       { id: 'logic_webhook', label: 'Webhook', icon: Zap, color: 'text-purple-500' },

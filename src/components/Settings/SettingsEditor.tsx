@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import useStore, { type Bot } from '@/lib/store';
 import { normalizeBotSettings, type BotSettings } from '@/lib/botSettings';
+import FlowPreview from '@/components/Preview/FlowPreview';
 
 interface SettingsEditorProps {
   bot: Bot;
@@ -25,8 +26,8 @@ export default function SettingsEditor({ bot }: SettingsEditorProps) {
   const updateBotSettings = useStore((state) => state.updateBotSettings);
   const settings = normalizeBotSettings(bot.settings);
   const [openSections, setOpenSections] = React.useState<Record<SettingsSection, boolean>>({
-    general: true,
-    typing: true,
+    general: false,
+    typing: false,
     security: false,
     metadata: false,
   });
@@ -44,8 +45,8 @@ export default function SettingsEditor({ bot }: SettingsEditorProps) {
 
   return (
     <div className="flex h-[calc(100vh-64px)] min-h-0 bg-white text-slate-900">
-      <aside className="w-[520px] min-w-[320px] border-r border-orange-100 bg-[#fffaf4] p-5">
-        <div className="h-full overflow-y-auto rounded-[28px] border border-orange-100 bg-white shadow-[0_12px_40px_rgba(255,106,0,0.08)]">
+      <aside className="w-[400px] min-w-[320px] border-r border-orange-100 bg-[#fffaf4] p-4">
+        <div className="h-full overflow-y-auto rounded-[24px] border border-orange-100 bg-white shadow-[0_12px_32px_rgba(255,106,0,0.07)]">
           <SettingsSectionShell
             icon={<MoreHorizontal size={18} />}
             label="General"
@@ -226,7 +227,7 @@ export default function SettingsEditor({ bot }: SettingsEditorProps) {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-hidden bg-white p-5">
+      <main className="flex-1 overflow-hidden bg-white p-4">
         <SettingsPreview bot={bot} settings={settings} />
       </main>
     </div>
@@ -236,35 +237,16 @@ export default function SettingsEditor({ bot }: SettingsEditorProps) {
 function SettingsPreview({ bot, settings }: { bot: Bot; settings: BotSettings }) {
   return (
     <div className="flex h-full items-center justify-center">
-      <div className="relative flex h-full w-full overflow-hidden rounded-[34px] border border-orange-100 bg-[#fffaf4] p-5 shadow-[0_20px_60px_rgba(255,106,0,0.12)]">
-        <div className="mx-auto flex h-full w-full max-w-[1080px] gap-8">
-          <div className="flex-1 rounded-[30px] border border-[#ececf5] bg-white px-8 py-8">
-            {settings.typing.typingEmulation ? (
-              <div className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#ff5a24]">
-                <div className="flex gap-1">
-                  <span className="h-2 w-2 rounded-full bg-[#ff5a24] animate-pulse" />
-                  <span className="h-2 w-2 rounded-full bg-[#ff5a24] animate-pulse [animation-delay:0.15s]" />
-                  <span className="h-2 w-2 rounded-full bg-[#ff5a24] animate-pulse [animation-delay:0.3s]" />
-                </div>
-                Typing emulation enabled
-              </div>
-            ) : null}
-
-            <div className="space-y-4">
-              <PreviewBubble align="bot">Hey - wave</PreviewBubble>
-              <PreviewMediaCard />
-              <PreviewBubble align="bot">Thank you for your interest in our marketing services.</PreviewBubble>
-              <PreviewBubble align="bot">Let&apos;s have a quick chat about your current situation.</PreviewBubble>
-              <div className="flex items-end gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ff5a24] text-white">
-                  {bot.name.slice(0, 1).toUpperCase()}
-                </div>
-                <PreviewBubble align="bot">Ready?</PreviewBubble>
-              </div>
-              <PreviewBubble align="user">Yes!</PreviewBubble>
-            </div>
-
-            <div className="mt-10 grid grid-cols-2 gap-4">
+      <div className="relative flex h-full w-full max-w-[980px] overflow-hidden rounded-[28px] border border-orange-100 bg-[#fffaf4] p-4 shadow-[0_18px_48px_rgba(255,106,0,0.10)]">
+        <div className="mx-auto flex h-full w-full max-w-[980px] gap-6">
+          <div className="flex flex-1 flex-col gap-4">
+            <FlowPreview
+              bot={bot}
+              className="flex-1 shadow-[0_12px_32px_rgba(15,23,42,0.08)]"
+              headerLabel="Settings preview"
+              showVariables={false}
+            />
+            <div className="grid grid-cols-2 gap-4">
               <PreviewStat label="Words per minute" value={`${settings.typing.wordsPerMinute}`} />
               <PreviewStat label="Max delay" value={`${settings.typing.maxDelaySeconds}s`} />
               <PreviewStat label="Remember user" value={settings.general.rememberUser ? 'On' : 'Off'} />
@@ -309,14 +291,14 @@ function SettingsSectionShell({
 }) {
   return (
     <section className="border-b border-orange-100">
-      <button onClick={onToggle} className="flex w-full items-center justify-between px-6 py-6 text-left">
-        <div className="flex items-center gap-4 text-[18px] font-semibold text-slate-900">
+      <button onClick={onToggle} className="flex w-full items-center justify-between px-5 py-4 text-left">
+        <div className="flex items-center gap-3 text-base font-semibold text-slate-900">
           <span className="text-orange-500">{icon}</span>
           {label}
         </div>
         <ChevronDown size={18} className={`text-slate-400 transition ${open ? 'rotate-180' : ''}`} />
       </button>
-      {open ? <div className="px-5 pb-5">{children}</div> : null}
+      {open ? <div className="px-4 pb-4">{children}</div> : null}
     </section>
   );
 }
@@ -476,40 +458,6 @@ function InfoPill({ text }: { text: string }) {
     <span title={text} className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-orange-200 text-slate-500">
       <Info size={12} />
     </span>
-  );
-}
-
-function PreviewBubble({
-  align,
-  children,
-}: {
-  align: 'bot' | 'user';
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={`flex ${align === 'user' ? 'justify-end' : 'justify-start'}`}>
-      <div
-        className={`max-w-[70%] rounded-[22px] border px-5 py-4 text-[15px] shadow-sm ${
-          align === 'user'
-            ? 'border-[#ff5a24] bg-[#ff5a24] text-white'
-            : 'border-[#ffe3d6] bg-[#fff7f1] text-[#0f172a]'
-        }`}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function PreviewMediaCard() {
-  return (
-    <div className="flex justify-start">
-      <div className="max-w-[70%] rounded-[22px] border border-[#ececf5] bg-[#f3f5fe] p-4 shadow-sm">
-        <div className="overflow-hidden rounded-[22px]">
-          <div className="aspect-[4/3] w-full bg-[radial-gradient(circle_at_22%_18%,rgba(255,255,255,0.55),transparent_18%),linear-gradient(135deg,#b67a3f,#ecb56e_42%,#6e88b8)]" />
-        </div>
-      </div>
-    </div>
   );
 }
 
