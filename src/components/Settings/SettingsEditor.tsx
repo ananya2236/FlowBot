@@ -40,7 +40,13 @@ export default function SettingsEditor({ bot }: SettingsEditorProps) {
   );
 
   const toggleSection = (section: SettingsSection) => {
-    setOpenSections((current) => ({ ...current, [section]: !current[section] }));
+    setOpenSections((current) => ({
+      general: false,
+      typing: false,
+      security: false,
+      metadata: false,
+      [section]: !current[section],
+    }));
   };
 
   return (

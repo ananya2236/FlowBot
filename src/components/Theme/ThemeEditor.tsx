@@ -79,7 +79,13 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
   );
 
   const toggleSection = (key: SectionKey) => {
-    setOpenSections((current) => ({ ...current, [key]: !current[key] }));
+    setOpenSections((current) => ({
+      templates: false,
+      global: false,
+      chat: false,
+      customCss: false,
+      [key]: !current[key],
+    }));
   };
 
   const saveCurrentTheme = () => {
