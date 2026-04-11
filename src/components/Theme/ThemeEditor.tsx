@@ -120,7 +120,7 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] min-h-0 bg-white text-slate-900">
+    <div className="flex h-full min-h-0 bg-white text-slate-900">
       <aside className="w-[400px] min-w-[320px] border-r border-orange-100 bg-[#fffaf4] p-4">
         <div className="h-full overflow-y-auto rounded-[24px] border border-orange-100 bg-white shadow-[0_12px_32px_rgba(255,106,0,0.07)]">
           <SectionShell
@@ -408,7 +408,7 @@ export default function ThemeEditor({ bot }: ThemeEditorProps) {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-hidden bg-white p-4">
+      <main className="flex-1 min-h-0 overflow-hidden bg-white p-4">
         <ThemePreview bot={bot} theme={theme} />
       </main>
     </div>

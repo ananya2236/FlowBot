@@ -63,7 +63,7 @@ export default function BotEditorPage() {
     switch (activeTab) {
       case 'Flow':
         return (
-          <div className="flex flex-1 min-h-0 relative overflow-hidden bg-white">
+          <div className="flex h-full min-h-0 relative overflow-hidden bg-white">
             <EditorSidebar />
             <main className={`flex-1 h-full min-h-0 relative overflow-hidden transition-all duration-300 ${isPreviewOpen ? 'pr-[430px]' : ''}`}>
               <FlowBuilder />
@@ -78,8 +78,8 @@ export default function BotEditorPage() {
         return <SettingsEditor bot={bot} />;
       case 'Share':
         return (
-          <div className="flex-1 overflow-y-auto p-12 bg-white dotted-bg">
-            <div className="max-w-3xl mx-auto space-y-6">
+          <div className="h-full min-h-0 overflow-y-auto bg-white dotted-bg p-4">
+            <div className="mx-auto max-w-3xl space-y-6 rounded-[28px] border border-orange-100 bg-white p-8 shadow-[0_18px_48px_rgba(255,106,0,0.08)]">
               <header className="mb-6">
                 <h2 className="text-4xl font-bold mb-2 tracking-tight text-black">Share</h2>
                 <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Share editor access and collaboration links</p>
@@ -141,7 +141,9 @@ export default function BotEditorPage() {
         setActiveTab={setActiveTab}
         onTestClick={() => setIsPreviewOpen(true)}
       />
-      {renderContent()}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {renderContent()}
+      </div>
     </div>
   );
 }
