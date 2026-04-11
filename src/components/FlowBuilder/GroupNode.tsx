@@ -43,6 +43,20 @@ import {
   BarChart3,
   Zap,
   Send,
+  Grid3x3,
+  MessageCircle,
+  Brain,
+  Volume2,
+  Share2,
+  Route,
+  Database,
+  Layers,
+  Headphones,
+  Search,
+  Eye,
+  QrCode,
+  Cpu,
+  CalendarDays,
 } from 'lucide-react';
 import {
   Block,
@@ -61,6 +75,7 @@ import {
   isSupportedSidebarType,
   migrateToBlocks,
 } from '@/lib/blocks';
+import { canAddMediaBlock, MEDIA_BLOCK_LIMIT_PER_TYPE } from '@/lib/mediaLimits';
 
 type IconComponent = React.ComponentType<{ size?: number; className?: string }>;
 
@@ -101,6 +116,30 @@ const BLOCK_TYPES: Record<string, { icon: IconComponent; color: string; bg: stri
   logic_analytics: { icon: BarChart3, color: 'text-amber-600', bg: 'bg-amber-50' },
   logic_http_request: { icon: Zap, color: 'text-sky-600', bg: 'bg-sky-50' },
   logic_send_email: { icon: Send, color: 'text-sky-600', bg: 'bg-sky-50' },
+  logic_zapier: { icon: Zap, color: 'text-orange-600', bg: 'bg-orange-50' },
+  logic_make: { icon: Grid3x3, color: 'text-violet-600', bg: 'bg-violet-50' },
+  logic_pabbly: { icon: Layers, color: 'text-blue-600', bg: 'bg-blue-50' },
+  logic_chatwoot: { icon: MessageCircle, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+  logic_pixel: { icon: Eye, color: 'text-slate-600', bg: 'bg-slate-100' },
+  logic_openai: { icon: Brain, color: 'text-emerald-700', bg: 'bg-emerald-50' },
+  logic_cal: { icon: CalendarDays, color: 'text-blue-600', bg: 'bg-blue-50' },
+  logic_chatnode: { icon: MessageSquare, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+  logic_qrcode: { icon: QrCode, color: 'text-slate-600', bg: 'bg-slate-100' },
+  logic_dify: { icon: Brain, color: 'text-blue-600', bg: 'bg-blue-50' },
+  logic_mistral: { icon: Cpu, color: 'text-orange-700', bg: 'bg-orange-50' },
+  logic_elevenlabs: { icon: Volume2, color: 'text-purple-700', bg: 'bg-purple-50' },
+  logic_anthropic: { icon: Brain, color: 'text-amber-700', bg: 'bg-amber-50' },
+  logic_together: { icon: Share2, color: 'text-green-700', bg: 'bg-green-50' },
+  logic_openrouter: { icon: Route, color: 'text-pink-600', bg: 'bg-pink-50' },
+  logic_nocodb: { icon: Database, color: 'text-emerald-700', bg: 'bg-emerald-50' },
+  logic_segment: { icon: Layers, color: 'text-blue-700', bg: 'bg-blue-50' },
+  logic_groq: { icon: Zap, color: 'text-rose-600', bg: 'bg-rose-50' },
+  logic_zendesk: { icon: Headphones, color: 'text-cyan-700', bg: 'bg-cyan-50' },
+  logic_postgres: { icon: Database, color: 'text-sky-700', bg: 'bg-sky-50' },
+  logic_perplexity: { icon: Brain, color: 'text-slate-700', bg: 'bg-slate-100' },
+  logic_deepseek: { icon: Search, color: 'text-cyan-700', bg: 'bg-cyan-50' },
+  logic_blink: { icon: Eye, color: 'text-lime-700', bg: 'bg-lime-50' },
+  logic_gmail: { icon: Send, color: 'text-red-600', bg: 'bg-red-50' },
 };
 
 const MENU_SECTIONS = [
@@ -163,6 +202,30 @@ const MENU_SECTIONS = [
       { id: 'integration_analytics', label: 'Analytics', icon: BarChart3, color: 'text-amber-500' },
       { id: 'integration_webhook', label: 'HTTP req', icon: Zap, color: 'text-sky-500' },
       { id: 'integration_email', label: 'Email', icon: Send, color: 'text-sky-500' },
+      { id: 'integration_zapier', label: 'Zapier', icon: Zap, color: 'text-orange-500' },
+      { id: 'integration_make', label: 'Make.com', icon: Grid3x3, color: 'text-purple-500' },
+      { id: 'integration_pabbly', label: 'Pabbly', icon: Layers, color: 'text-blue-500' },
+      { id: 'integration_chatwoot', label: 'Chatwoot', icon: MessageCircle, color: 'text-cyan-500' },
+      { id: 'integration_pixel', label: 'Pixel', icon: Eye, color: 'text-gray-600' },
+      { id: 'integration_openai', label: 'OpenAI', icon: Brain, color: 'text-green-600' },
+      { id: 'integration_cal', label: 'Cal.com', icon: CalendarDays, color: 'text-blue-500' },
+      { id: 'integration_chatnode', label: 'ChatNode', icon: MessageSquare, color: 'text-indigo-500' },
+      { id: 'integration_qrcode', label: 'QR code', icon: QrCode, color: 'text-slate-600' },
+      { id: 'integration_dify', label: 'Dify.AI', icon: Brain, color: 'text-blue-500' },
+      { id: 'integration_mistral', label: 'Mistral', icon: Cpu, color: 'text-orange-600' },
+      { id: 'integration_elevenlabs', label: 'ElevenLabs', icon: Volume2, color: 'text-purple-600' },
+      { id: 'integration_anthropic', label: 'Anthropic', icon: Brain, color: 'text-amber-600' },
+      { id: 'integration_together', label: 'Together', icon: Share2, color: 'text-green-500' },
+      { id: 'integration_openrouter', label: 'OpenRouter', icon: Route, color: 'text-pink-500' },
+      { id: 'integration_nocodb', label: 'NocoDB', icon: Database, color: 'text-emerald-500' },
+      { id: 'integration_segment', label: 'Segment', icon: Layers, color: 'text-blue-600' },
+      { id: 'integration_groq', label: 'Groq', icon: Zap, color: 'text-red-500' },
+      { id: 'integration_zendesk', label: 'Zendesk', icon: Headphones, color: 'text-cyan-600' },
+      { id: 'integration_postgres', label: 'Postgres', icon: Database, color: 'text-sky-600' },
+      { id: 'integration_perplexity', label: 'Perplexity', icon: Brain, color: 'text-slate-700' },
+      { id: 'integration_deepseek', label: 'DeepSeek', icon: Search, color: 'text-cyan-700' },
+      { id: 'integration_blink', label: 'Blink', icon: Eye, color: 'text-lime-600' },
+      { id: 'integration_gmail', label: 'Gmail', icon: Send, color: 'text-red-500' },
     ],
   },
 ];
@@ -209,7 +272,7 @@ function getBlockHandles(block: Block) {
 }
 
 const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; selected: boolean }) => {
-  const { updateNodeData, previewNodeId } = useStore();
+  const { updateNodeData, previewNodeId, bots, activeBotId } = useStore();
   const title = data.title || 'Group #1';
   const blocks = migrateToBlocks(data);
   const activeBlockId = data.activeBlockId || blocks[0]?.id || null;
@@ -240,7 +303,19 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
     );
   }, [activeBlockId, blocks, id, title, updateNodeData]);
 
+  const canInsertBlock = useCallback((sidebarType: string) => {
+    if (!['image', 'video', 'audio'].includes(sidebarType)) return true;
+    const activeBot = bots.find((bot) => bot.id === activeBotId);
+    if (!activeBot) return true;
+    const allowed = canAddMediaBlock(activeBot.nodes, sidebarType as 'image' | 'video' | 'audio');
+    if (!allowed) {
+      window.alert(`You can only add up to ${MEDIA_BLOCK_LIMIT_PER_TYPE} ${sidebarType} blocks per flow.`);
+    }
+    return allowed;
+  }, [activeBotId, bots]);
+
   const addBlock = useCallback((sidebarType: string) => {
+    if (!canInsertBlock(sidebarType)) return;
     const block = createDefaultBlock(sidebarType);
     if (!block) return;
 
@@ -249,13 +324,13 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
       activeBlockId: block.id,
     });
     setShowAddMenu(false);
-  }, [blocks, patchGroup]);
+  }, [blocks, canInsertBlock, patchGroup]);
 
   const updateBlock = useCallback((blockId: string, partial: Partial<Block>) => {
     patchGroup({
       blocks: blocks.map((block) => (block.id === blockId ? ({ ...block, ...partial } as Block) : block)),
     });
-  }, [blocks, patchGroup]);
+  }, [blocks, canInsertBlock, patchGroup]);
 
   const duplicateGroup = useCallback(() => {
     const { addNode } = useStore.getState();
@@ -308,6 +383,11 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
         patchGroup({ blocks: next });
       }
     } else if (isSupportedSidebarType(externalType)) {
+      if (!canInsertBlock(externalType)) {
+        setDragIdx(null);
+        setDropIdx(null);
+        return;
+      }
       const block = createDefaultBlock(externalType);
       if (block) {
         const next = [...blocks];
@@ -337,6 +417,11 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
 
     const externalType = event.dataTransfer.getData('application/reactflow');
     if (isSupportedSidebarType(externalType)) {
+      if (!canInsertBlock(externalType)) {
+        setDragIdx(null);
+        setDropIdx(null);
+        return;
+      }
       const block = createDefaultBlock(externalType);
       if (block) {
         patchGroup({
@@ -348,7 +433,7 @@ const GroupNode = ({ id, data, selected }: { id: string; data: GroupNodeData; se
 
     setDragIdx(null);
     setDropIdx(null);
-  }, [blocks, patchGroup]);
+  }, [blocks, canInsertBlock, patchGroup]);
 
   const onDragEnd = useCallback(() => {
     setDragIdx(null);

@@ -36,6 +36,14 @@ import {
   getBlockSummary,
   migrateToBlocks,
 } from '@/lib/blocks';
+import {
+  INTEGRATION_LABELS,
+  createDefaultIntegrationConfig,
+  isIntegrationProvider,
+  type IntegrationBlockConfig,
+  type IntegrationHeader,
+} from '@/lib/integrations';
+import { MEDIA_BLOCK_LIMIT_PER_TYPE, MEDIA_UPLOAD_LIMIT_MB, getMediaFileLimitError } from '@/lib/mediaLimits';
 
 const CONDITION_OPERATORS: Array<{ value: ConditionOperator; label: string }> = [
   { value: 'equals', label: 'Equals' },
@@ -466,6 +474,12 @@ const BubbleSettings = ({ block, onChange }: { block: BubbleBlock; onChange: (p:
   const attachFromDevice = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const error = getMediaFileLimitError(file, block.type);
+    if (error) {
+      window.alert(error);
+      event.target.value = '';
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -564,6 +578,12 @@ const BubbleSettings = ({ block, onChange }: { block: BubbleBlock; onChange: (p:
                 <span>Source: {sourceLabel}</span>
                 {block.attachmentName ? <span className="truncate max-w-[170px]">{block.attachmentName}</span> : null}
               </div>
+            ) : null}
+
+            {isMediaBlock ? (
+              <Hint>
+                Media blocks are capped at {MEDIA_UPLOAD_LIMIT_MB}MB per file and {block.maxQuantity ?? MEDIA_BLOCK_LIMIT_PER_TYPE} {block.type} blocks per flow.
+              </Hint>
             ) : null}
           </div>
         )}
@@ -771,10 +791,123 @@ const LogicSettings = ({ block, onChange }: { block: LogicBlock; onChange: (p: P
   }
 
   const r = block as ActionLogicBlock;
+
+  if (isIntegrationProvider(r.type)) {
+    const integration = r.integration || createDefaultIntegrationConfig(r.type);
+    const patchIntegration = (partial: Partial<IntegrationBlockConfig>) =>
+      onChange({
+        label: partial.url ?? integration.url ?? r.label,
+        integration: {
+          ...integration,
+          ...partial,
+        },
+      });
+
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="Provider">
+            <input value={INTEGRATION_LABELS[r.type]} readOnly className={inputClass + ' bg-slate-50'} />
+          </Field>
+          <Field label="Operation">
+            <input value={integration.operation} onChange={(e) => patchIntegration({ operation: e.target.value })} className={inputClass} placeholder="call_api" />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="Method">
+            <select value={integration.method} onChange={(e) => patchIntegration({ method: e.target.value as IntegrationBlockConfig['method'] })} className={inputClass}>
+              {['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].map((method) => (
+                <option key={method} value={method}>{method}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Target variable">
+            <input value={integration.targetVariable} onChange={(e) => patchIntegration({ targetVariable: formatVariableName(e.target.value) })} className={inputClass} placeholder="openai_result" />
+          </Field>
+        </div>
+
+        <Field label="API URL">
+          <input value={integration.url} onChange={(e) => patchIntegration({ url: e.target.value })} className={inputClass} placeholder="https://api.example.com/..." />
+        </Field>
+
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="API key / token">
+            <input value={integration.apiKey} onChange={(e) => patchIntegration({ apiKey: e.target.value })} className={inputClass} placeholder="Bearer token or key" />
+          </Field>
+          <Field label="Model">
+            <input value={integration.model} onChange={(e) => patchIntegration({ model: e.target.value })} className={inputClass} placeholder="Optional model" />
+          </Field>
+        </div>
+
+        {(r.type === 'send_email' || r.type === 'gmail') ? (
+          <div className="space-y-2">
+            <Field label="To">
+              <input value={integration.to} onChange={(e) => patchIntegration({ to: e.target.value })} className={inputClass} placeholder="user@example.com" />
+            </Field>
+            <Field label="Subject">
+              <input value={integration.subject} onChange={(e) => patchIntegration({ subject: e.target.value })} className={inputClass} placeholder="Email subject" />
+            </Field>
+          </div>
+        ) : null}
+
+        <Field label="Prompt / body template">
+          <textarea
+            value={integration.prompt || integration.body}
+            onChange={(e) => patchIntegration({ prompt: e.target.value, body: e.target.value })}
+            rows={4}
+            className={inputClass + ' resize-none'}
+            placeholder="Use {{variables}} here. For API blocks this becomes the request body if no body is set."
+          />
+        </Field>
+
+        <FieldGroup title="Headers">
+          <HeaderEditor headers={integration.headers} onChange={(headers) => patchIntegration({ headers })} />
+        </FieldGroup>
+
+        <Hint>
+          This block is API-driven. Configure the URL, method, headers, and prompt/body so the runtime can call the provider and store the result in <span className="font-mono text-[11px]">{`{{${integration.targetVariable}}}`}</span>.
+        </Hint>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <Field label="Label"><input value={r.label} onChange={(e) => onChange({ label: e.target.value })} className={inputClass} placeholder="Go to group" /></Field>
       <Hint>Connect this step to another group. Preview will follow the connected path.</Hint>
     </div>
+);
+
+function HeaderEditor({ headers, onChange }: { headers: IntegrationHeader[]; onChange: (headers: IntegrationHeader[]) => void }) {
+  return (
+    <div className="space-y-1.5">
+      {headers.map((header) => (
+        <div key={header.id} className="grid grid-cols-[1fr_1fr_auto] gap-1.5">
+          <input
+            value={header.key}
+            onChange={(e) => onChange(headers.map((item) => item.id === header.id ? { ...item, key: e.target.value } : item))}
+            className={inputClass}
+            placeholder="Authorization"
+          />
+          <input
+            value={header.value}
+            onChange={(e) => onChange(headers.map((item) => item.id === header.id ? { ...item, value: e.target.value } : item))}
+            className={inputClass}
+            placeholder="Bearer {{token}}"
+          />
+          <button onClick={() => onChange(headers.filter((item) => item.id !== header.id))} className="shrink-0 rounded-md p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+            <X size={12} />
+          </button>
+        </div>
+      ))}
+      <button
+        onClick={() => onChange([...headers, { id: `hdr_${Date.now()}`, key: '', value: '' }])}
+        className="w-full rounded-md border border-dashed border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-400 hover:border-orange-300 hover:text-orange-500 transition-colors"
+      >
+        + Add header
+      </button>
+    </div>
   );
+}
 };

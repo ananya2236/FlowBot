@@ -1,3 +1,6 @@
+import { createDefaultIntegrationConfig, isIntegrationProvider } from '@/lib/integrations';
+import { getDefaultMediaLimit, MEDIA_UPLOAD_LIMIT_MB } from '@/lib/mediaLimits';
+
 export type BubbleBlockType = 'text' | 'image' | 'video' | 'audio' | 'embed';
 export type InputBlockType =
   | 'text'
@@ -31,7 +34,31 @@ export type LogicBlockType =
   | 'sheets'
   | 'analytics'
   | 'http_request'
-  | 'send_email';
+  | 'send_email'
+  | 'zapier'
+  | 'make'
+  | 'pabbly'
+  | 'chatwoot'
+  | 'pixel'
+  | 'openai'
+  | 'cal'
+  | 'chatnode'
+  | 'qrcode'
+  | 'dify'
+  | 'mistral'
+  | 'elevenlabs'
+  | 'anthropic'
+  | 'together'
+  | 'openrouter'
+  | 'nocodb'
+  | 'segment'
+  | 'groq'
+  | 'zendesk'
+  | 'postgres'
+  | 'perplexity'
+  | 'deepseek'
+  | 'blink'
+  | 'gmail';
 export type ConditionOperator =
   | 'equals'
   | 'not_equals'
@@ -47,7 +74,7 @@ export type SupportedSidebarType =
   | `input_${InputBlockType}`
   | `logic_${LogicBlockType}`
   | `event_${'start' | 'command' | 'reply' | 'invalid'}`
-  | `integration_${'sheets' | 'analytics' | 'webhook' | 'email'}`;
+  | `integration_${'sheets' | 'analytics' | 'webhook' | 'email' | 'zapier' | 'make' | 'pabbly' | 'chatwoot' | 'pixel' | 'openai' | 'cal' | 'chatnode' | 'qrcode' | 'dify' | 'mistral' | 'elevenlabs' | 'anthropic' | 'together' | 'openrouter' | 'nocodb' | 'segment' | 'groq' | 'zendesk' | 'postgres' | 'perplexity' | 'deepseek' | 'blink' | 'gmail'}`;
 
 export interface BaseBlock {
   id: string;
@@ -64,6 +91,8 @@ export interface BubbleBlock extends BaseBlock {
   attachmentName?: string;
   attachmentMimeType?: string;
   driveLink?: string;
+  maxFileSizeMb?: number;
+  maxQuantity?: number;
 }
 
 export interface InputValidation {
@@ -128,6 +157,7 @@ export interface ActionLogicBlock extends BaseBlock {
   kind: 'logic';
   type: Exclude<LogicBlockType, 'set_variable' | 'condition'>;
   label: string;
+  integration?: import('@/lib/integrations').IntegrationBlockConfig;
 }
 
 export type LogicBlock = SetVariableBlock | ConditionBlock | ActionLogicBlock;
@@ -148,6 +178,8 @@ interface LegacyBubble {
   attachmentName?: string;
   attachmentMimeType?: string;
   driveLink?: string;
+  maxFileSizeMb?: number;
+  maxQuantity?: number;
 }
 
 interface LegacyInput {
@@ -201,11 +233,13 @@ interface LegacyBlock {
   attachmentName?: string;
   attachmentMimeType?: string;
   driveLink?: string;
+  maxQuantity?: number;
   value?: string;
   operator?: ConditionOperator;
   trueLabel?: string;
   falseLabel?: string;
   label?: string;
+  integration?: import('@/lib/integrations').IntegrationBlockConfig;
 }
 
 interface FlowEdgeLike {
@@ -260,6 +294,30 @@ const SUPPORTED_TYPES: SupportedSidebarType[] = [
   'integration_analytics',
   'integration_webhook',
   'integration_email',
+  'integration_zapier',
+  'integration_make',
+  'integration_pabbly',
+  'integration_chatwoot',
+  'integration_pixel',
+  'integration_openai',
+  'integration_cal',
+  'integration_chatnode',
+  'integration_qrcode',
+  'integration_dify',
+  'integration_mistral',
+  'integration_elevenlabs',
+  'integration_anthropic',
+  'integration_together',
+  'integration_openrouter',
+  'integration_nocodb',
+  'integration_segment',
+  'integration_groq',
+  'integration_zendesk',
+  'integration_postgres',
+  'integration_perplexity',
+  'integration_deepseek',
+  'integration_blink',
+  'integration_gmail',
 ];
 
 const BLOCK_LABELS: Record<string, string> = {
@@ -299,6 +357,58 @@ const BLOCK_LABELS: Record<string, string> = {
   logic_analytics: 'Analytics',
   logic_http_request: 'HTTP request',
   logic_send_email: 'Send email',
+  logic_zapier: 'Zapier',
+  logic_make: 'Make.com',
+  logic_pabbly: 'Pabbly',
+  logic_chatwoot: 'Chatwoot',
+  logic_pixel: 'Pixel',
+  logic_openai: 'OpenAI',
+  logic_cal: 'Cal.com',
+  logic_chatnode: 'ChatNode',
+  logic_qrcode: 'QR code',
+  logic_dify: 'Dify.AI',
+  logic_mistral: 'Mistral',
+  logic_elevenlabs: 'ElevenLabs',
+  logic_anthropic: 'Anthropic',
+  logic_together: 'Together',
+  logic_openrouter: 'OpenRouter',
+  logic_nocodb: 'NocoDB',
+  logic_segment: 'Segment',
+  logic_groq: 'Groq',
+  logic_zendesk: 'Zendesk',
+  logic_postgres: 'Postgres',
+  logic_perplexity: 'Perplexity',
+  logic_deepseek: 'DeepSeek',
+  logic_blink: 'Blink',
+  logic_gmail: 'Gmail',
+  integration_sheets: 'Google Sheets',
+  integration_analytics: 'Analytics',
+  integration_webhook: 'HTTP request',
+  integration_email: 'Email',
+  integration_zapier: 'Zapier',
+  integration_make: 'Make.com',
+  integration_pabbly: 'Pabbly',
+  integration_chatwoot: 'Chatwoot',
+  integration_pixel: 'Pixel',
+  integration_openai: 'OpenAI',
+  integration_cal: 'Cal.com',
+  integration_chatnode: 'ChatNode',
+  integration_qrcode: 'QR code',
+  integration_dify: 'Dify.AI',
+  integration_mistral: 'Mistral',
+  integration_elevenlabs: 'ElevenLabs',
+  integration_anthropic: 'Anthropic',
+  integration_together: 'Together',
+  integration_openrouter: 'OpenRouter',
+  integration_nocodb: 'NocoDB',
+  integration_segment: 'Segment',
+  integration_groq: 'Groq',
+  integration_zendesk: 'Zendesk',
+  integration_postgres: 'Postgres',
+  integration_perplexity: 'Perplexity',
+  integration_deepseek: 'DeepSeek',
+  integration_blink: 'Blink',
+  integration_gmail: 'Gmail',
 };
 
 const BUBBLE_TYPES: BubbleBlockType[] = ['text', 'image', 'video', 'audio', 'embed'];
@@ -336,6 +446,30 @@ const LOGIC_TYPES: LogicBlockType[] = [
   'analytics',
   'http_request',
   'send_email',
+  'zapier',
+  'make',
+  'pabbly',
+  'chatwoot',
+  'pixel',
+  'openai',
+  'cal',
+  'chatnode',
+  'qrcode',
+  'dify',
+  'mistral',
+  'elevenlabs',
+  'anthropic',
+  'together',
+  'openrouter',
+  'nocodb',
+  'segment',
+  'groq',
+  'zendesk',
+  'postgres',
+  'perplexity',
+  'deepseek',
+  'blink',
+  'gmail',
 ];
 
 function createId() {
@@ -465,6 +599,30 @@ const ACTION_DEFAULT_LABELS: Record<Exclude<LogicBlockType, 'set_variable' | 'co
   analytics: 'Track event in analytics',
   http_request: 'Send HTTP request',
   send_email: 'Send email notification',
+  zapier: 'Trigger Zapier automation',
+  make: 'Run Make.com scenario',
+  pabbly: 'Trigger Pabbly automation',
+  chatwoot: 'Open Chatwoot widget',
+  pixel: 'Track conversion pixel',
+  openai: 'Generate OpenAI response',
+  cal: 'Create Cal.com booking',
+  chatnode: 'Send prompt to ChatNode',
+  qrcode: 'Generate QR code',
+  dify: 'Run Dify workflow',
+  mistral: 'Generate Mistral response',
+  elevenlabs: 'Generate ElevenLabs audio',
+  anthropic: 'Generate Anthropic response',
+  together: 'Call Together API',
+  openrouter: 'Route via OpenRouter',
+  nocodb: 'Write to NocoDB',
+  segment: 'Send Segment event',
+  groq: 'Generate Groq response',
+  zendesk: 'Create Zendesk ticket',
+  postgres: 'Run Postgres query',
+  perplexity: 'Call Perplexity API',
+  deepseek: 'Generate DeepSeek response',
+  blink: 'Trigger Blink automation',
+  gmail: 'Send Gmail message',
 };
 
 function normalizeFileSources(fileSources?: FileSource[], legacyFileSources?: ('device' | 'cloud_link')[]) {
@@ -499,7 +657,7 @@ export function createDefaultBlock(sidebarType: string): Block | null {
       options,
       ratingScale: type === 'rating' ? 5 : undefined,
       acceptedFileTypes: type === 'file' ? '.pdf,.doc,.jpg,.png' : undefined,
-      maxFileSizeMb: type === 'file' ? 10 : undefined,
+      maxFileSizeMb: type === 'file' ? MEDIA_UPLOAD_LIMIT_MB : undefined,
       currency: type === 'payment' ? 'USD' : undefined,
       amount: type === 'payment' ? 99 : undefined,
       paymentMethods: type === 'payment' ? createDefaultPaymentMethods() : undefined,
@@ -534,6 +692,30 @@ export function createDefaultBlock(sidebarType: string): Block | null {
       integration_analytics: 'analytics',
       integration_webhook: 'http_request',
       integration_email: 'send_email',
+      integration_zapier: 'zapier',
+      integration_make: 'make',
+      integration_pabbly: 'pabbly',
+      integration_chatwoot: 'chatwoot',
+      integration_pixel: 'pixel',
+      integration_openai: 'openai',
+      integration_cal: 'cal',
+      integration_chatnode: 'chatnode',
+      integration_qrcode: 'qrcode',
+      integration_dify: 'dify',
+      integration_mistral: 'mistral',
+      integration_elevenlabs: 'elevenlabs',
+      integration_anthropic: 'anthropic',
+      integration_together: 'together',
+      integration_openrouter: 'openrouter',
+      integration_nocodb: 'nocodb',
+      integration_segment: 'segment',
+      integration_groq: 'groq',
+      integration_zendesk: 'zendesk',
+      integration_postgres: 'postgres',
+      integration_perplexity: 'perplexity',
+      integration_deepseek: 'deepseek',
+      integration_blink: 'blink',
+      integration_gmail: 'gmail',
     } as const;
 
     const mappedType = integrationTypeMap[sidebarType as keyof typeof integrationTypeMap];
@@ -542,6 +724,7 @@ export function createDefaultBlock(sidebarType: string): Block | null {
       kind: 'logic',
       type: mappedType,
       label: ACTION_DEFAULT_LABELS[mappedType],
+      integration: createDefaultIntegrationConfig(mappedType),
     };
   }
 
@@ -576,6 +759,7 @@ export function createDefaultBlock(sidebarType: string): Block | null {
       kind: 'logic',
       type,
       label: ACTION_DEFAULT_LABELS[type as Exclude<LogicBlockType, 'set_variable' | 'condition'>],
+      integration: isIntegrationProvider(type) ? createDefaultIntegrationConfig(type) : undefined,
     };
   }
 
@@ -588,6 +772,8 @@ export function createDefaultBlock(sidebarType: string): Block | null {
     embed: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
   };
 
+  const mediaLimits = getDefaultMediaLimit(bubbleType as BubbleBlockType);
+
   return {
     id,
     kind: 'bubble',
@@ -595,6 +781,8 @@ export function createDefaultBlock(sidebarType: string): Block | null {
     content: defaults[bubbleType as BubbleBlockType],
     attachmentSource: bubbleType === 'text' ? undefined : 'link',
     attachmentUrl: bubbleType === 'text' ? undefined : defaults[bubbleType as BubbleBlockType],
+    maxFileSizeMb: mediaLimits?.maxFileSizeMb,
+    maxQuantity: mediaLimits?.maxQuantity,
   };
 }
 
@@ -645,6 +833,8 @@ function normalizeBlock(block: LegacyBlock): Block | null {
       attachmentName: block.attachmentName,
       attachmentMimeType: block.attachmentMimeType,
       driveLink: block.driveLink,
+      maxFileSizeMb: block.maxFileSizeMb ?? getDefaultMediaLimit(block.type)?.maxFileSizeMb,
+      maxQuantity: block.maxQuantity ?? getDefaultMediaLimit(block.type)?.maxQuantity,
     };
   }
 
@@ -664,7 +854,7 @@ function normalizeBlock(block: LegacyBlock): Block | null {
       options: block.options,
       ratingScale: block.ratingScale || (block.type === 'rating' ? 5 : undefined),
       acceptedFileTypes: block.acceptedFileTypes || (block.type === 'file' ? '.pdf,.doc,.jpg,.png' : undefined),
-      maxFileSizeMb: block.maxFileSizeMb || (block.type === 'file' ? 10 : undefined),
+      maxFileSizeMb: block.maxFileSizeMb || (block.type === 'file' ? MEDIA_UPLOAD_LIMIT_MB : undefined),
       currency: block.currency || (block.type === 'payment' ? 'USD' : undefined),
       amount: typeof block.amount === 'number' ? block.amount : block.type === 'payment' ? 99 : undefined,
       paymentMethods: block.paymentMethods || (block.type === 'payment' ? createDefaultPaymentMethods() : undefined),
@@ -705,6 +895,9 @@ function normalizeBlock(block: LegacyBlock): Block | null {
       kind: 'logic',
       type: block.type,
       label: block.label || ACTION_DEFAULT_LABELS[block.type as Exclude<LogicBlockType, 'set_variable' | 'condition'>],
+      integration: isIntegrationProvider(block.type)
+        ? block.integration || createDefaultIntegrationConfig(block.type)
+        : undefined,
     };
   }
 
@@ -728,6 +921,13 @@ export function migrateToBlocks(
       kind: 'bubble',
       type: bubble.type,
       content: bubble.content,
+      attachmentSource: bubble.attachmentSource,
+      attachmentUrl: bubble.attachmentUrl,
+      attachmentName: bubble.attachmentName,
+      attachmentMimeType: bubble.attachmentMimeType,
+      driveLink: bubble.driveLink,
+      maxFileSizeMb: bubble.maxFileSizeMb,
+      maxQuantity: bubble.maxQuantity,
     });
 
     if (normalized) blocks.push(normalized);

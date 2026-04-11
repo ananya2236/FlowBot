@@ -20,6 +20,7 @@ import StartNode from './StartNode';
 import CanvasToolbar from './CanvasToolbar';
 import useStore from '@/lib/store';
 import { createDefaultBlock, createGroupData, migrateToBlocks, sanitizeFlowEdges, type GroupNodeData } from '@/lib/blocks';
+import { canAddMediaBlock, MEDIA_BLOCK_LIMIT_PER_TYPE } from '@/lib/mediaLimits';
 
 const nodeTypes = {
   group: GroupNode,
@@ -83,6 +84,14 @@ const FlowBuilderInner = () => {
 
       const type = event.dataTransfer.getData('application/reactflow');
       if (!type) return;
+
+      if (type === 'image' || type === 'video' || type === 'audio') {
+        const activeBot = bots.find((bot) => bot.id === activeBotId);
+        if (activeBot && !canAddMediaBlock(activeBot.nodes, type)) {
+          window.alert(`You can only add up to ${MEDIA_BLOCK_LIMIT_PER_TYPE} ${type} blocks per flow.`);
+          return;
+        }
+      }
 
       const position = screenToFlowPosition({
         x: event.clientX,
