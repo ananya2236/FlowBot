@@ -32,11 +32,22 @@ export interface BotMetadataSettings {
   allowSearchEnginesToIndex: boolean;
 }
 
+export interface BotWhatsAppSettings {
+  enabled: boolean;
+  phoneNumberId: string;
+  accessToken: string;
+  businessAccountId: string;
+  webhookUrl: string;
+  autoReply: string;
+  allowFileUploads: boolean;
+}
+
 export interface BotSettings {
   general: BotGeneralSettings;
   typing: BotTypingSettings;
   security: BotSecuritySettings;
   metadata: BotMetadataSettings;
+  whatsapp: BotWhatsAppSettings;
 }
 
 export function createDefaultBotSettings(): BotSettings {
@@ -71,6 +82,15 @@ export function createDefaultBotSettings(): BotSettings {
       customHeadCode: '',
       allowSearchEnginesToIndex: false,
     },
+    whatsapp: {
+      enabled: false,
+      phoneNumberId: '',
+      accessToken: '',
+      businessAccountId: '',
+      webhookUrl: '',
+      autoReply: 'Thanks for reaching out! I will respond shortly.',
+      allowFileUploads: true,
+    },
   };
 }
 
@@ -92,6 +112,10 @@ export function normalizeBotSettings(input?: Partial<BotSettings> | null): BotSe
     metadata: {
       ...defaults.metadata,
       ...(input?.metadata ?? {}),
+    },
+    whatsapp: {
+      ...defaults.whatsapp,
+      ...(input?.whatsapp ?? {}),
     },
   };
 }

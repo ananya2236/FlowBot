@@ -96,7 +96,26 @@ const initialNodes: Node[] = [
 ];
 
 const remoteSaveTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const remoteSyncQueues = new Map<string, Promise<void>>();
 let remoteHandlers: RemotePersistenceHandlers | null = null;
+
+function enqueueRemoteSync(botId: string, operation: () => Promise<void>) {
+  const queuedOperation = (remoteSyncQueues.get(botId) ?? Promise.resolve())
+    .catch(() => {
+      // Keep the queue alive even if a prior operation failed.
+    })
+    .then(operation);
+
+  remoteSyncQueues.set(botId, queuedOperation);
+
+  void queuedOperation.finally(() => {
+    if (remoteSyncQueues.get(botId) === queuedOperation) {
+      remoteSyncQueues.delete(botId);
+    }
+  });
+
+  return queuedOperation;
+}
 
 const createInitialNodes = (): Node[] =>
   initialNodes.map((node) => ({
@@ -167,13 +186,15 @@ function setPendingSync(botId: string, pending: boolean) {
 async function saveBotNow(bot: Bot) {
   if (!remoteHandlers) return;
   setPendingSync(bot.id, true);
-  try {
-    await remoteHandlers.saveBot(cloneBot(bot));
-  } catch (error) {
-    console.error(`Failed to sync bot ${bot.id} to Convex.`, error);
-  } finally {
-    setPendingSync(bot.id, false);
-  }
+  void enqueueRemoteSync(bot.id, async () => {
+    try {
+      await remoteHandlers?.saveBot(cloneBot(bot));
+    } catch (error) {
+      console.error(`Failed to sync bot ${bot.id} to Convex.`, error);
+    } finally {
+      setPendingSync(bot.id, false);
+    }
+  });
 }
 
 function scheduleRemoteSave(bot: Bot, delayMs = 450) {
@@ -193,14 +214,15 @@ function deleteBotRemotely(botId: string) {
   clearPendingRemoteSave(botId);
   if (!remoteHandlers) return;
   setPendingSync(botId, true);
-  void remoteHandlers
-    .deleteBot(botId)
-    .catch((error) => {
+  void enqueueRemoteSync(botId, async () => {
+    try {
+      await remoteHandlers?.deleteBot(botId);
+    } catch (error) {
       console.error(`Failed to delete bot ${botId} in Convex.`, error);
-    })
-    .finally(() => {
+    } finally {
       setPendingSync(botId, false);
-    });
+    }
+  });
 }
 
 function withTrackedBotUpdate(

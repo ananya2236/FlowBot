@@ -50,6 +50,13 @@ function BotStoreSync() {
       return;
     }
 
+    // Only migrate local bots when the remote store is empty.
+    // This avoids re-introducing previously deleted bots from stale local storage.
+    if ((remoteBots as Bot[]).length > 0) {
+      hasAttemptedMigration.current = true;
+      return;
+    }
+
     const remoteBotIds = new Set((remoteBots as Bot[]).map((bot) => bot.id));
     const botsToMigrate = localBots.filter((bot) => !remoteBotIds.has(bot.id));
 

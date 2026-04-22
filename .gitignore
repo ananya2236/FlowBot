@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+WHATSAPP_IMPLEMENTATION_EXAMPLES.md
+WHATSAPP_QUICKSTART.md
+WHATSAPP_SETUP.md
+
+WHATSAPP_*.md

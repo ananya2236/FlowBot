@@ -13,4 +13,19 @@ export default defineSchema({
     updatedAt: v.number(),
     createdAt: v.number(),
   }).index('by_bot_id', ['botId']),
+  botRevisions: defineTable({
+    botId: v.string(),
+    revision: v.number(),
+    name: v.string(),
+    nodes: v.array(v.any()),
+    edges: v.array(v.any()),
+    settings: v.optional(v.any()),
+    theme: v.optional(v.any()),
+    status: v.union(v.literal('Draft'), v.literal('Live')),
+    updatedAt: v.number(),
+    createdAt: v.number(),
+    savedAt: v.number(),
+  })
+    .index('by_bot_id', ['botId'])
+    .index('by_bot_id_and_revision', ['botId', 'revision']),
 });
